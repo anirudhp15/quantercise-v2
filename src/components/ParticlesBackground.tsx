@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
 
 interface CyberBackgroundProps {
   particleCount?: number;
@@ -161,7 +159,7 @@ export default function ParticlesBackground({
 
     const animate = () => {
       const isDark = document.documentElement.classList.contains("dark");
-      const scheme = isDark ? COLOR_SCHEME.dark : COLOR_SCHEME.light;
+      const currentScheme = isDark ? COLOR_SCHEME.dark : COLOR_SCHEME.light;
 
       ctx.fillStyle = isDark
         ? "rgba(0, 0, 0, 0.1)"
