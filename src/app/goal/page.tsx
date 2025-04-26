@@ -24,7 +24,7 @@ export default function GoalPage() {
           </h1>
 
           <p className="text-xl text-gray-300">
-            At Quantercise, we're driven by a simple yet ambitious mission:
+            At Quantercise, we&apos;re driven by a simple yet ambitious mission:
           </p>
 
           <blockquote className="border-l-4 border-primary pl-4 py-3 text-2xl md:text-3xl italic text-white">
@@ -49,10 +49,10 @@ export default function GoalPage() {
             </p>
 
             <p>
-              By introducing calculus concepts earlier, we're not just teaching
-              math—we're cultivating a mindset of analysis, abstraction, and
-              problem-solving that will benefit children throughout their lives,
-              regardless of their future career paths.
+              By introducing calculus concepts earlier, we&apos;re not just
+              teaching math—we&apos;re cultivating a mindset of analysis,
+              abstraction, and problem-solving that will benefit children
+              throughout their lives, regardless of their future career paths.
             </p>
 
             <p>

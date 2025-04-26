@@ -56,7 +56,7 @@ const DetailsSection = () => {
           <div className="flex-1 space-y-8">
             <motion.div variants={itemVariants} className="space-y-4">
               <h2 className="text-3xl md:text-4xl font-bold text-primary">
-                What's Quantercise?
+                What&apos;s Quantercise?
               </h2>
               <p className="text-xl leading-relaxed text-foreground/80 max-w-2xl">
                 An advanced mathematics learning platform designed to transform

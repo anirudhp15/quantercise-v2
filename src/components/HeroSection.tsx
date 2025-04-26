@@ -54,7 +54,7 @@ const HeroSection = () => {
               className="min-w-[140px] text-base font-medium"
               onClick={() => scrollTo("details")}
             >
-              See What's Up
+              See What&apos;s Up
             </Button>
           </motion.div>
         </div>
