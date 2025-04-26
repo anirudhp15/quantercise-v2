@@ -159,7 +159,6 @@ export default function ParticlesBackground({
 
     const animate = () => {
       const isDark = document.documentElement.classList.contains("dark");
-      const currentScheme = isDark ? COLOR_SCHEME.dark : COLOR_SCHEME.light;
 
       ctx.fillStyle = isDark
         ? "rgba(0, 0, 0, 0.1)"
