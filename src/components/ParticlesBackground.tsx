@@ -6,8 +6,6 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 interface CyberBackgroundProps {
-  title?: string;
-  subtitle?: string;
   particleCount?: number;
   noiseIntensity?: number;
   particleSize?: { min: number; max: number };
@@ -124,8 +122,6 @@ interface Particle {
 }
 
 export default function ParticlesBackground({
-  title = "Particles Background",
-  subtitle = "Make your website stand out",
   particleCount = 2000,
   noiseIntensity = 0.003,
   particleSize = { min: 0.5, max: 2 },

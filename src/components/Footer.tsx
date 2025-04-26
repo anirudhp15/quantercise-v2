@@ -104,7 +104,7 @@ const Footer = () => {
             <h2 className="text-primary font-bold text-2xl">Quantercise</h2>
             <p className="text-foreground/70 max-w-xs">
               Empowering the next generation to ace calculus early, through math
-              they'll actually enjoy.
+              they&apos;ll actually enjoy.
             </p>
 
             <div className="flex space-x-4">
