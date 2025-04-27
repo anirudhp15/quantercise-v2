@@ -1,66 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
-import {
-  LayoutDashboard,
-  BookOpen,
-  BarChart3,
-  Settings,
-  LogOut,
-  Menu,
-} from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2, Menu, ChevronLeft, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-
-const navItems = [
-  {
-    name: "Dashboard",
-    href: "/dashboard",
-    icon: <LayoutDashboard className="h-5 w-5" />,
-  },
-  {
-    name: "Exercises",
-    href: "/dashboard/exercises",
-    icon: <BookOpen className="h-5 w-5" />,
-  },
-  {
-    name: "Progress",
-    href: "/dashboard/progress",
-    icon: <BarChart3 className="h-5 w-5" />,
-  },
-  {
-    name: "Settings",
-    href: "/dashboard/settings",
-    icon: <Settings className="h-5 w-5" />,
-  },
-];
-
-const sidebarVariants = {
-  hidden: { x: "-100%" },
-  visible: {
-    x: 0,
-    transition: {
-      type: "spring",
-      stiffness: 300,
-      damping: 30,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, x: -20 },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: {
-      duration: 0.2,
-    },
-  },
-};
+import { useAuth } from "@/lib/auth-context";
+import Sidebar from "@/components/dashboard/Sidebar";
 
 export const DashboardLayout = ({
   children,
@@ -68,95 +15,121 @@ export const DashboardLayout = ({
   children: React.ReactNode;
 }) => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const pathname = usePathname();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const { user, isLoading, session } = useAuth();
+  const router = useRouter();
 
-  const NavContent = () => (
-    <div className="flex h-full flex-col">
-      <div className="flex h-14 items-center border-b px-4">
-        <Link href="/" className="flex items-center space-x-2">
-          <span className="text-xl font-bold text-primary">Quantercise</span>
-        </Link>
+  useEffect(() => {
+    // Redirect to login if user is not authenticated
+    if (!isLoading && !user) {
+      console.log("Dashboard: No user found, redirecting to login");
+      router.push("/auth/login?redirect=/dashboard");
+    } else if (!isLoading && user) {
+      console.log("Dashboard: User authenticated:", user.email);
+      console.log("Dashboard: Session exists:", !!session);
+    }
+  }, [user, isLoading, router, session]);
+
+  // If still loading or no user, show loading state
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-[#343541] text-white">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="h-10 w-10 animate-spin text-gray-300" />
+          <p className="text-sm text-gray-400">Loading dashboard...</p>
+        </div>
       </div>
+    );
+  }
 
-      <nav className="flex-1 space-y-2 p-4">
-        <motion.div
-          variants={{
-            visible: {
-              transition: {
-                staggerChildren: 0.05,
-              },
-            },
-          }}
-          initial="hidden"
-          animate="visible"
-        >
-          {navItems.map((item) => (
-            <motion.div key={item.name} variants={itemVariants}>
-              <Link
-                href={item.href}
-                className={cn(
-                  "flex items-center space-x-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                  pathname === item.href
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                {item.icon}
-                <span>{item.name}</span>
-              </Link>
-            </motion.div>
-          ))}
-        </motion.div>
-      </nav>
-
-      <div className="border-t p-4">
-        <Link href="/">
+  // If not loading and no user, show error state
+  if (!user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-[#343541] text-white">
+        <div className="flex flex-col items-center space-y-4">
+          <p className="text-lg text-red-400">Authentication required</p>
           <Button
-            variant="ghost"
-            className="w-full justify-start space-x-3"
-            size="sm"
+            onClick={() => router.push("/auth/login?redirect=/dashboard")}
+            className="bg-gray-700 hover:bg-gray-600 text-white"
           >
-            <LogOut className="h-5 w-5" />
-            <span>Sign Out</span>
+            Go to Login
           </Button>
-        </Link>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen flex overflow-hidden bg-[#343541]">
       {/* Desktop sidebar */}
-      <motion.aside
-        variants={sidebarVariants}
-        initial="visible"
-        animate="visible"
-        className="fixed hidden h-full w-64 border-r bg-card/50 backdrop-blur-sm lg:block"
+      <motion.div
+        className="hidden fixed h-full lg:block z-50"
+        initial={false}
+        animate={{
+          width: isCollapsed ? "64px" : "256px",
+          transition: { duration: 0.3, ease: "easeInOut" },
+        }}
       >
-        <NavContent />
-      </motion.aside>
+        <Sidebar
+          isMobileSidebarOpen={false}
+          setMobileSidebarOpen={() => {}}
+          isCollapsed={isCollapsed}
+        />
 
-      {/* Mobile sidebar */}
+        {/* Collapse toggle button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute -right-16 top-4 z-50 rounded-full bg-[#202123] border border-gray-700 text-gray-300 hover:text-white hover:bg-[#202123]"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+        >
+          {isCollapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
+        </Button>
+      </motion.div>
+
+      {/* Mobile sidebar trigger */}
       <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
         <SheetTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden fixed top-4 left-4 z-40"
+            className="lg:hidden fixed top-4 left-4 z-40 text-gray-300 hover:text-white bg-transparent hover:bg-[#202123]/60"
           >
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0">
-          <NavContent />
+        <SheetContent side="left" className="w-64 p-0 border-none bg-[#202123]">
+          <Sidebar
+            isMobileSidebarOpen={isMobileOpen}
+            setMobileSidebarOpen={setIsMobileOpen}
+            isCollapsed={false}
+          />
         </SheetContent>
       </Sheet>
 
       {/* Main content */}
-      <main className="lg:pl-64">
-        <div className="min-h-screen bg-background p-8">{children}</div>
-      </main>
+      <motion.main
+        className="flex-1 h-screen overflow-y-auto"
+        initial={false}
+        animate={{
+          paddingLeft: isCollapsed ? "64px" : "256px",
+        }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+      >
+        <motion.div
+          className="h-full w-full"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          {children}
+        </motion.div>
+      </motion.main>
     </div>
   );
 };

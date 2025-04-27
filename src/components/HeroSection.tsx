@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth-context";
 
 // Helper function for smooth scrolling
 const scrollTo = (id: string) => {
@@ -67,6 +68,7 @@ const HeroSection = () => {
 
   const [verb, setVerb] = useState<"Learn" | "Teach">("Learn");
   const [isGlitching, setIsGlitching] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     // Function to handle the glitch effect and verb toggling
@@ -153,14 +155,25 @@ const HeroSection = () => {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="flex flex-col sm:flex-row gap-3 sm:gap-4 mx-auto"
           >
-            <Link href="/dashboard" className="w-full sm:w-auto">
-              <Button
-                size="lg"
-                className="w-full sm:w-auto min-w-[140px] text-base hover:bg-gray-300 font-medium"
-              >
-                Try for Free
-              </Button>
-            </Link>
+            {user ? (
+              <Link href="/dashboard" className="w-full sm:w-auto">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto min-w-[140px] text-base hover:bg-gray-300 font-medium"
+                >
+                  Go to Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/auth/signup" className="w-full sm:w-auto">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto min-w-[140px] text-base hover:bg-gray-300 font-medium"
+                >
+                  Try for Free
+                </Button>
+              </Link>
+            )}
             <Button
               variant="secondary"
               size="lg"

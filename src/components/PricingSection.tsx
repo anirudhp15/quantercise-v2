@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
 
 interface PricingSectionProps {
   className?: string;
@@ -29,54 +30,56 @@ const itemVariants = {
   },
 };
 
-const plans = [
-  {
-    name: "Starter",
-    price: "Free",
-    period: "forever",
-    description: "Perfect for getting started with Quantercise",
-    features: [
-      "5 daily lessons",
-      "Progress tracking",
-      "Community support",
-      "Basic analytics",
-    ],
-    cta: "Get Started",
-    href: "/register",
-  },
-  {
-    name: "Premium",
-    price: "$9.99",
-    period: "per month",
-    description: "For students who want to excel in mathematics",
-    features: [
-      "All Starter features + advanced exercises",
-      "Personalized learning path",
-      "Detailed performance analytics",
-      "Priority support",
-    ],
-    cta: "Upgrade Now",
-    href: "/pricing/premium",
-    featured: true,
-  },
-  {
-    name: "Schools & Districts",
-    price: "Custom",
-    period: "per year",
-    description: "For educational institutions",
-    features: [
-      "All Premium features",
-      "Bulk student accounts",
-      "Teacher tools",
-      "Custom curriculum",
-      "Dedicated support",
-    ],
-    cta: "Contact Sales",
-    href: "/contact",
-  },
-];
-
 export function PricingSection({ className }: PricingSectionProps) {
+  const { user } = useAuth();
+
+  const plans = [
+    {
+      name: "Starter",
+      price: "Free",
+      period: "forever",
+      description: "Perfect for getting started with Quantercise",
+      features: [
+        "5 daily lessons",
+        "Progress tracking",
+        "Community support",
+        "Basic analytics",
+      ],
+      cta: user ? "Go to Dashboard" : "Get Started",
+      href: user ? "/dashboard" : "/auth/signup",
+    },
+    {
+      name: "Premium",
+      price: "$9.99",
+      period: "per month",
+      description: "For students who want to excel in mathematics",
+      features: [
+        "All Starter features + advanced exercises",
+        "Personalized learning path",
+        "Detailed performance analytics",
+        "Priority support",
+      ],
+      cta: user ? "Upgrade Account" : "Sign Up & Upgrade",
+      href: user ? "/dashboard/settings" : "/auth/signup?plan=premium",
+      featured: true,
+    },
+    {
+      name: "Schools & Districts",
+      price: "Custom",
+      period: "per year",
+      description: "For educational institutions",
+      features: [
+        "All Premium features",
+        "Bulk student accounts",
+        "Teacher tools",
+        "Custom curriculum",
+        "Dedicated support",
+      ],
+      cta: "Contact Sales",
+      href: "/contact",
+    },
+  ];
+
   return (
     <section id="pricing" className={cn("py-12 sm:py-16 md:py-20", className)}>
       <motion.div

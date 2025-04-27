@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { Menu, X, Boxes } from "lucide-react";
+import { Menu, X, Boxes, LogOut } from "lucide-react";
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
 
 // Helper function for smooth scrolling
 const scrollTo = (id: string) => {
@@ -28,6 +29,7 @@ type NavItem = {
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { scrollY } = useScroll();
+  const { user, signOut, isLoading } = useAuth();
 
   // Transform the container max-width based on scroll - now shrinks instead of grows
   const containerMaxWidth = useTransform(scrollY, [0, 100], ["100%", "60%"]);
@@ -41,6 +43,10 @@ const Navbar = () => {
     { name: "Our Mission", href: "/goal" },
     { name: "Hit Us Up", action: () => scrollTo("footer") },
   ];
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 w-full">
@@ -100,16 +106,38 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center space-x-3">
-            <Link href="/login">
-              <Button variant="outline" size="sm" className="rounded-full">
-                Login
-              </Button>
-            </Link>
-            <Link href="/dashboard">
-              <Button variant="default" size="sm" className="rounded-full">
-                Try for Free
-              </Button>
-            </Link>
+            {user ? (
+              <>
+                <Link href="/dashboard">
+                  <Button variant="outline" size="sm" className="rounded-full">
+                    Dashboard
+                  </Button>
+                </Link>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="rounded-full"
+                  onClick={handleSignOut}
+                  disabled={isLoading}
+                >
+                  <LogOut className="h-4 w-4 mr-1" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link href="/auth/login">
+                  <Button variant="outline" size="sm" className="rounded-full">
+                    Login
+                  </Button>
+                </Link>
+                <Link href="/auth/signup">
+                  <Button variant="default" size="sm" className="rounded-full">
+                    Try for Free
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile navigation */}
@@ -190,14 +218,38 @@ const Navbar = () => {
           </div>
 
           <div className="mt-8 space-y-3">
-            <Link href="/login" onClick={() => setIsOpen(false)}>
-              <Button variant="outline" className="w-full rounded-full">
-                Login
-              </Button>
-            </Link>
-            <Link href="/dashboard" onClick={() => setIsOpen(false)}>
-              <Button className="w-full rounded-full">Try for Free</Button>
-            </Link>
+            {user ? (
+              <>
+                <Link href="/dashboard" onClick={() => setIsOpen(false)}>
+                  <Button variant="outline" className="w-full rounded-full">
+                    Dashboard
+                  </Button>
+                </Link>
+                <Button
+                  variant="destructive"
+                  className="w-full rounded-full"
+                  onClick={() => {
+                    handleSignOut();
+                    setIsOpen(false);
+                  }}
+                  disabled={isLoading}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link href="/auth/login" onClick={() => setIsOpen(false)}>
+                  <Button variant="outline" className="w-full rounded-full">
+                    Login
+                  </Button>
+                </Link>
+                <Link href="/auth/signup" onClick={() => setIsOpen(false)}>
+                  <Button className="w-full rounded-full">Try for Free</Button>
+                </Link>
+              </>
+            )}
           </div>
         </nav>
       </motion.div>
