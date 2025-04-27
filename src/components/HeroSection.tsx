@@ -183,12 +183,13 @@ const HeroSection = () => {
         </div>
       </div>
 
-      {/* Abstract decorative shapes - subtle visual interest */}
-      <div className="absolute -bottom-48 -left-48 w-64 sm:w-96 h-64 sm:h-96 rounded-full bg-primary/5 blur-3xl" />
-      <div className="absolute -top-48 -right-48 w-64 sm:w-96 h-64 sm:h-96 rounded-full bg-primary/5 blur-3xl" />
-
       {/* Placeholder Image Section with Fade */}
-      <div className="relative z-20 max-w-screen-xl bg-gray-800/50 rounded-2xl border-2 border-gray-700/50 mx-auto mt-24 h-[500px] sm:h-[600px] overflow-hidden">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="relative z-20 max-w-screen-xl bg-gray-800/50 rounded-2xl border-2 border-gray-700/50 mx-auto mt-24 h-[500px] sm:h-[600px] overflow-hidden"
+      >
         {/* Caption */}
         <div className="absolute top-8 left-8 z-20">
           <div className="flex items-center space-x-4">
@@ -202,18 +203,25 @@ const HeroSection = () => {
           </div>
         </div>
 
-        {/* Placeholder Image */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-transparent z-10" />
+        {/* Base Image Layer */}
         <div
-          className="absolute inset-0 bg-[#1a1a1a]"
+          className="absolute inset-0"
           style={{
             backgroundImage: 'url("/placeholder-demo.png")',
             backgroundSize: "cover",
             backgroundPosition: "center",
-            opacity: 0.3,
+            opacity: 0.7,
           }}
         />
-      </div>
+
+        {/* Multiple Gradient Layers for smooth fade */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/20 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/60 to-background" />
+
+        {/* Final dark overlay for better text contrast */}
+        <div className="absolute inset-0 bg-black/20" />
+      </motion.div>
     </section>
   );
 };

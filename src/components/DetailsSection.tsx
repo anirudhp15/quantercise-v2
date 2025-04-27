@@ -22,8 +22,7 @@ const DemoSection = () => {
           transition={{ duration: 0.6 }}
           className="text-2xl sm:text-3xl md:text-5xl max-w-4xl mx-auto font-bold text-center"
         >
-          Quantercise provides math tools and shortcuts for students and
-          teachers
+          Quantercise provides tools and shortcuts for teachers and students
         </motion.h2>
 
         {/* Student Feature */}
@@ -54,12 +53,12 @@ const DemoSection = () => {
           {/* text */}
           <div className="flex-1 space-y-3 sm:space-y-4 max-w-lg px-4 sm:px-0">
             <h3 className="text-2xl sm:text-3xl font-bold">
-              Features for Students
+              For teachers and educators
             </h3>
             <p className="text-base sm:text-lg text-gray-300">
-              Access any K-12 math question or topic—across textbooks and
-              curricula— powered by a Langraph multi-LLM agent that guides you
-              step by step.
+              Auto-generate slides, worksheets, and step-by-step solutions with
+              built-in accuracy checks, so you can focus on teaching, not
+              prepping.
             </p>
           </div>
         </motion.div>
@@ -91,12 +90,12 @@ const DemoSection = () => {
           {/* text */}
           <div className="flex-1 space-y-3 sm:space-y-4 max-w-lg px-4 sm:px-0">
             <h3 className="text-2xl sm:text-3xl font-bold">
-              Features for Teachers
+              For students and learners
             </h3>
             <p className="text-base sm:text-lg text-gray-300">
-              Auto-generate slides, worksheets, and step-by-step solutions with
-              built-in accuracy checks, so you can focus on teaching, not
-              prepping.
+              Access any K-12 math question or topic—across textbooks and
+              curricula— powered by a Langraph multi-LLM agent that guides you
+              step by step.
             </p>
           </div>
         </motion.div>
