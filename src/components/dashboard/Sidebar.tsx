@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "@/lib/theme-context";
+import { toast } from "@/components/ui/use-toast";
 
 type SidebarProps = {
   isMobileSidebarOpen: boolean;
@@ -52,7 +54,7 @@ const Sidebar = ({
 }: SidebarProps) => {
   const pathname = usePathname();
   const router = useRouter();
-  const [chatMode, setChatMode] = useState<"student" | "teacher">("student");
+  const { theme, setTheme } = useTheme();
   const [isCreatingChat, setIsCreatingChat] = useState(false);
   const [isNewChatHovered, setIsNewChatHovered] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -88,7 +90,7 @@ const Sidebar = ({
   const startNewChat = async (mode: "student" | "teacher") => {
     try {
       setIsCreatingChat(true);
-      setChatMode(mode);
+      setTheme(mode);
 
       // Create a new conversation in the database with the selected mode
       const response = await fetch("/api/conversations", {
@@ -103,7 +105,13 @@ const Sidebar = ({
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create conversation");
+        const errorData = await response.json();
+        if (response.status === 401) {
+          // Use router.push instead of window.location for client-side navigation
+          router.push("/auth/login");
+          return;
+        }
+        throw new Error(errorData.error || "Failed to create conversation");
       }
 
       const data = await response.json();
@@ -112,8 +120,14 @@ const Sidebar = ({
       router.push(`/dashboard/chat?id=${data.id}&mode=${mode}`);
     } catch (error) {
       console.error("Error creating chat:", error);
-      // Fallback to just navigating to the chat page with mode
-      router.push(`/dashboard/chat?mode=${mode}`);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to create conversation",
+        variant: "destructive",
+      });
     } finally {
       setIsCreatingChat(false);
     }
@@ -171,7 +185,7 @@ const Sidebar = ({
               "flex items-center gap-3 rounded-md border border-gray-700 text-sm font-medium text-white transition-colors duration-200",
               isCollapsed ? "justify-center px-2 py-3" : "w-full px-3 py-3"
             )}
-            onClick={() => startNewChat(chatMode)}
+            onClick={() => startNewChat(theme)}
             disabled={isCreatingChat}
             onMouseEnter={() => setIsNewChatHovered(true)}
             onMouseLeave={() => setIsNewChatHovered(false)}
@@ -203,13 +217,13 @@ const Sidebar = ({
               <motion.button
                 className={cn(
                   "flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors duration-200",
-                  chatMode === "student"
+                  theme === "student"
                     ? "bg-[#343541] text-white"
-                    : "text-gray-300"
+                    : "text-gray-500"
                 )}
-                onClick={() => setChatMode("student")}
+                onClick={() => setTheme("student")}
                 whileHover={
-                  chatMode !== "student"
+                  theme !== "student"
                     ? { backgroundColor: "rgba(255, 255, 255, 0.05)" }
                     : {}
                 }
@@ -221,13 +235,13 @@ const Sidebar = ({
               <motion.button
                 className={cn(
                   "flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors duration-200",
-                  chatMode === "teacher"
+                  theme === "teacher"
                     ? "bg-[#343541] text-white"
-                    : "text-gray-300"
+                    : "text-gray-500"
                 )}
-                onClick={() => setChatMode("teacher")}
+                onClick={() => setTheme("teacher")}
                 whileHover={
-                  chatMode !== "teacher"
+                  theme !== "teacher"
                     ? { backgroundColor: "rgba(255, 255, 255, 0.05)" }
                     : {}
                 }
@@ -269,9 +283,7 @@ const Sidebar = ({
                       onMouseEnter={() => setHoveredIndex(index)}
                       onMouseLeave={() => setHoveredIndex(null)}
                       onClick={() =>
-                        router.push(
-                          `/dashboard/chat?id=${index}&mode=${chatMode}`
-                        )
+                        router.push(`/dashboard/chat?id=${index}&mode=${theme}`)
                       }
                     >
                       <MessageSquare className="h-4 w-4 flex-shrink-0" />

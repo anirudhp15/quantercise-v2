@@ -38,12 +38,12 @@ export default function DashboardPage() {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-8"
+      className="space-y-8 p-4"
     >
       <div className="flex flex-col gap-4">
         <motion.h1
           variants={itemVariants}
-          className="text-3xl font-bold tracking-tight"
+          className="text-3xl pl-16 font-bold tracking-tight"
         >
           Dashboard
         </motion.h1>

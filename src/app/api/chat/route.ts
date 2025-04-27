@@ -107,24 +107,32 @@ function OpenAIStream(response: any): ReadableStream<Uint8Array> {
 
 export async function POST(req: Request) {
   try {
-    const { conversationId, message } = await req.json();
+    const { conversationId, message, mode } = await req.json();
 
-    if (!conversationId || !message) {
-      return new Response(
-        JSON.stringify({ error: "Missing conversationId or message" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
+    if (!message) {
+      return new Response(JSON.stringify({ error: "Message is required" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
-    // Create a Supabase client
-    const supabase = createRouteHandlerClient<Database>({ cookies });
+    // Create a Supabase client with awaited cookies
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient<Database>({
+      cookies: () => cookieStore,
+    });
 
     // Check if the user is authenticated
     const {
       data: { session },
+      error: sessionError,
     } = await supabase.auth.getSession();
 
-    if (!session) {
+    if (sessionError || !session?.user) {
+      console.error(
+        "Authentication error:",
+        sessionError || "No session found"
+      );
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
@@ -132,12 +140,38 @@ export async function POST(req: Request) {
     }
 
     const userId = session.user.id;
+    let activeConversationId = conversationId;
+
+    // If no conversationId is provided, create a new conversation
+    if (!activeConversationId) {
+      const { data: newConversation, error: createError } = await supabase
+        .from("conversations")
+        .insert({
+          user_id: userId,
+          mode: mode || "student", // Use provided mode or default to student
+          title: "New Conversation",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (createError || !newConversation) {
+        console.error("Error creating conversation:", createError);
+        return new Response(
+          JSON.stringify({ error: "Failed to create conversation" }),
+          { status: 500, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      activeConversationId = newConversation.id;
+    }
 
     // Verify if the conversation belongs to the authenticated user
     const { data: conversation, error: conversationError } = await supabase
       .from("conversations")
       .select("*")
-      .eq("id", conversationId)
+      .eq("id", activeConversationId)
       .eq("user_id", userId)
       .single();
 
@@ -155,7 +189,7 @@ export async function POST(req: Request) {
 
     // Insert the user's message into the database
     await supabase.from("messages").insert({
-      conversation_id: conversationId,
+      conversation_id: activeConversationId,
       role: "user",
       content: message,
     });
@@ -164,7 +198,7 @@ export async function POST(req: Request) {
     const { data: messages, error: messagesError } = await supabase
       .from("messages")
       .select("*")
-      .eq("conversation_id", conversationId)
+      .eq("conversation_id", activeConversationId)
       .order("created_at", { ascending: true });
 
     if (messagesError) {
@@ -201,8 +235,8 @@ export async function POST(req: Request) {
 
     // Make the API call to OpenAI
     const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo",
-      messages: openaiMessages as any, // Type assertion to avoid TypeScript error
+      model: "gpt-3.5-turbo", // Using 3.5-turbo instead of 4-turbo for wider availability
+      messages: openaiMessages as any,
       stream: true,
     });
 
@@ -213,7 +247,7 @@ export async function POST(req: Request) {
     async function saveCompletion(completion: string) {
       // Save the assistant's response back to the database
       await supabase.from("messages").insert({
-        conversation_id: conversationId,
+        conversation_id: activeConversationId,
         role: "assistant",
         content: completion,
       });
@@ -222,7 +256,7 @@ export async function POST(req: Request) {
       await supabase
         .from("conversations")
         .update({ updated_at: new Date().toISOString() })
-        .eq("id", conversationId);
+        .eq("id", activeConversationId);
     }
 
     // Return the streaming response

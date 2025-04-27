@@ -69,9 +69,9 @@ export default function ExercisesPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4">
       <div className="flex flex-col gap-4">
-        <h1 className="text-3xl font-bold tracking-tight">Exercises</h1>
+        <h1 className="text-3xl pl-16 font-bold tracking-tight">Exercises</h1>
         <p className="text-muted-foreground">
           Explore our math curriculum and continue your learning journey
         </p>

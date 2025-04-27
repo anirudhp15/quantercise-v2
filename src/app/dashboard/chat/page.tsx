@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/lib/theme-context";
+import { useRouter } from "next/navigation";
 
 // Animation variants
 const fadeIn = {
@@ -55,7 +57,8 @@ const ChatMessage = ({ role, content }: { role: string; content: string }) => (
 export default function ChatPage() {
   const searchParams = useSearchParams();
   const conversationId = searchParams.get("id");
-  const mode = searchParams.get("mode") || "student";
+  const { theme } = useTheme();
+  const router = useRouter();
 
   const [messages, setMessages] = useState<{ role: string; content: string }[]>(
     []
@@ -92,7 +95,7 @@ export default function ChatPage() {
         {
           role: "assistant",
           content: `Welcome to ${
-            mode === "student" ? "student" : "teacher"
+            theme === "student" ? "student" : "teacher"
           } mode! How can I help you today?`,
         },
       ]);
@@ -102,12 +105,12 @@ export default function ChatPage() {
         {
           role: "assistant",
           content: `Welcome to ${
-            mode === "student" ? "student" : "teacher"
+            theme === "student" ? "student" : "teacher"
           } mode! How can I help you today?`,
         },
       ]);
     }
-  }, [conversationId, mode]);
+  }, [conversationId, theme]);
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
@@ -131,11 +134,17 @@ export default function ChatPage() {
         body: JSON.stringify({
           conversationId,
           message: input,
+          mode: theme,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
+        if (response.status === 401) {
+          // Use router.push instead of window.location for client-side navigation
+          router.push("/auth/login");
+          return;
+        }
         throw new Error(errorData.error || "Failed to send message");
       }
 
@@ -169,6 +178,8 @@ export default function ChatPage() {
     } catch (error) {
       console.error("Error sending message:", error);
       setError(error instanceof Error ? error.message : "An error occurred");
+      // Remove the failed message from the UI
+      setMessages((prev) => prev.slice(0, -1));
     } finally {
       setIsLoading(false);
     }
@@ -251,7 +262,7 @@ export default function ChatPage() {
           variants={fadeIn}
           className="text-xs text-center mt-2 text-gray-400"
         >
-          {mode === "student"
+          {theme === "student"
             ? "Ask questions about math and quantitative concepts to enhance your learning."
             : "Get help creating educational content and assessment materials."}
         </motion.p>
