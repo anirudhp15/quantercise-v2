@@ -32,7 +32,7 @@ const Navbar = () => {
   const { user, signOut, isLoading } = useAuth();
 
   // Transform the container max-width based on scroll - now shrinks instead of grows
-  const containerMaxWidth = useTransform(scrollY, [0, 100], ["100%", "60%"]);
+  const containerMaxWidth = useTransform(scrollY, [0, 100], ["100%", "70%"]);
   const containerPadding = useTransform(scrollY, [0, 100], ["8rem", "2rem"]);
   const containerMargin = useTransform(scrollY, [0, 100], ["0px", "1rem"]);
   const containerRadius = useTransform(scrollY, [0, 100], ["0px", "9999px"]);
@@ -41,7 +41,7 @@ const Navbar = () => {
     { name: "Info", action: () => scrollTo("details") },
     { name: "Pricing", action: () => scrollTo("pricing") },
     { name: "Our Mission", href: "/goal" },
-    { name: "Hit Us Up", action: () => scrollTo("footer") },
+    // { name: "Hit Us Up", action: () => scrollTo("footer") },
   ];
 
   const handleSignOut = async () => {
@@ -60,7 +60,7 @@ const Navbar = () => {
           marginRight: "auto",
           borderRadius: containerRadius,
         }}
-        className="transition-all duration-200 ease-in-out border border-gray-800/40 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+        className="transition-all duration-200 ease-in-out border border-gray-700/40 bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60"
       >
         <div className="flex h-14 items-center justify-between">
           <div className="flex items-center">
@@ -73,7 +73,7 @@ const Navbar = () => {
           </div>
 
           {/* Desktop navigation */}
-          <div className="hidden md:flex items-center justify-center absolute left-1/2 -translate-x-1/2">
+          <div className="hidden lg:flex items-center justify-center absolute left-1/2 -translate-x-1/2">
             <NavigationMenu>
               <NavigationMenuList>
                 {navItems.map((item) => (
@@ -105,24 +105,24 @@ const Navbar = () => {
             </NavigationMenu>
           </div>
 
-          <div className="hidden md:flex items-center space-x-3">
+          <div className="hidden lg:flex text-sm items-center space-x-3">
             {user ? (
               <>
-                <Link href="/dashboard">
-                  <Button variant="outline" size="sm" className="rounded-full">
-                    Dashboard
-                  </Button>
-                </Link>
                 <Button
-                  variant="destructive"
+                  variant="outline"
                   size="sm"
                   className="rounded-full"
                   onClick={handleSignOut}
                   disabled={isLoading}
                 >
                   <LogOut className="h-4 w-4 mr-1" />
-                  Sign Out
+                  Logout
                 </Button>
+                <Link href="/dashboard">
+                  <Button variant="default" size="sm" className="rounded-full">
+                    Dashboard
+                  </Button>
+                </Link>
               </>
             ) : (
               <>
@@ -141,7 +141,7 @@ const Navbar = () => {
           </div>
 
           {/* Mobile navigation */}
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <Button
               variant="ghost"
               size="icon"
@@ -157,7 +157,7 @@ const Navbar = () => {
 
       {/* Mobile menu overlay */}
       <motion.div
-        className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 md:hidden"
+        className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 lg:hidden"
         initial={{ opacity: 0 }}
         animate={{ opacity: isOpen ? 1 : 0 }}
         transition={{ duration: 0.2 }}
@@ -166,7 +166,7 @@ const Navbar = () => {
 
       {/* Mobile menu panel */}
       <motion.div
-        className="fixed inset-y-0 right-0 w-full max-w-sm bg-background border-l border-border z-50 md:hidden"
+        className="fixed inset-y-0 right-0 w-full max-w-sm bg-background border-l border-border z-50 lg:hidden"
         initial={{ x: "100%" }}
         animate={{ x: isOpen ? 0 : "100%" }}
         transition={{ type: "spring", damping: 20, stiffness: 200 }}
@@ -217,7 +217,7 @@ const Navbar = () => {
             ))}
           </div>
 
-          <div className="mt-8 space-y-3">
+          <div className="mt-8 text-sm space-y-3">
             {user ? (
               <>
                 <Link href="/dashboard" onClick={() => setIsOpen(false)}>
@@ -235,7 +235,7 @@ const Navbar = () => {
                   disabled={isLoading}
                 >
                   <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
+                  Logout
                 </Button>
               </>
             ) : (

@@ -29,7 +29,7 @@ const RotatingWords = ({ words }: { words: string[] }) => {
   return (
     <span
       className="text-green-300 inline-block relative"
-      style={{ minWidth: "240px", display: "inline-block" }}
+      style={{ display: "inline-block" }}
     >
       <AnimatePresence mode="wait" initial={false}>
         <motion.span
@@ -95,9 +95,6 @@ const HeroSection = () => {
 
   return (
     <section className="relative w-full py-32 px-4 ">
-      {/* Background pattern - subtle grid */}
-      <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px] opacity-20" />
-
       <div className="container max-w-screen-xl relative z-10 mx-auto">
         <div className="flex flex-col items-center text-center space-y-4 sm:space-y-6 md:space-y-8">
           <motion.div
@@ -106,8 +103,8 @@ const HeroSection = () => {
             transition={{ duration: 0.5 }}
             className="max-w-5xl space-y-3 sm:space-y-4 w-full mx-auto"
           >
-            <div className="text-3xl w-full sm:text-4xl md:text-6xl lg:text-7xl font-bold text-primary tracking-tight leading-tight text-center">
-              <div className="inline-flex text-left w-full flex-wrap justify-center whitespace-nowrap">
+            <div className="text-2xl w-full sm:text-4xl md:text-6xl lg:text-7xl font-bold text-primary tracking-tight leading-tight text-center">
+              <div className="text-center w-full flex-wrap justify-center whitespace-nowrap">
                 <motion.span
                   className={isGlitching ? "relative inline-block" : ""}
                   animate={
@@ -138,7 +135,7 @@ const HeroSection = () => {
                 >
                   {verb}
                 </motion.span>
-                <span className="mx-3">through</span>
+                <span className="sm:mx-3 mx-2">through</span>
                 <RotatingWords words={rotatingWords} />
               </div>
               <div>for students and teachers.</div>
@@ -189,6 +186,34 @@ const HeroSection = () => {
       {/* Abstract decorative shapes - subtle visual interest */}
       <div className="absolute -bottom-48 -left-48 w-64 sm:w-96 h-64 sm:h-96 rounded-full bg-primary/5 blur-3xl" />
       <div className="absolute -top-48 -right-48 w-64 sm:w-96 h-64 sm:h-96 rounded-full bg-primary/5 blur-3xl" />
+
+      {/* Placeholder Image Section with Fade */}
+      <div className="relative z-20 max-w-screen-xl bg-gray-800/50 rounded-2xl border-2 border-gray-700/50 mx-auto mt-24 h-[500px] sm:h-[600px] overflow-hidden">
+        {/* Caption */}
+        <div className="absolute top-8 left-8 z-20">
+          <div className="flex items-center space-x-4">
+            <div className="text-sm font-medium text-gray-400">Ask AI</div>
+            <div className="text-sm font-medium text-gray-400">04:15</div>
+          </div>
+          <div className="mt-2 text-lg font-semibold">AI Response</div>
+          <div className="mt-1 text-sm text-gray-400 max-w-md">
+            A powerful AI assistant that helps you understand complex
+            mathematical concepts.
+          </div>
+        </div>
+
+        {/* Placeholder Image */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-transparent z-10" />
+        <div
+          className="absolute inset-0 bg-[#1a1a1a]"
+          style={{
+            backgroundImage: 'url("/placeholder-demo.png")',
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            opacity: 0.3,
+          }}
+        />
+      </div>
     </section>
   );
 };
