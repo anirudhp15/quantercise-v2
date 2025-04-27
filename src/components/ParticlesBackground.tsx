@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface CyberBackgroundProps {
@@ -113,6 +113,16 @@ export default function ParticlesBackground({
 }: CyberBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const noise = createNoise();
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    // Add delay before showing particles
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 1000); // 1 second delay
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -179,6 +189,7 @@ export default function ParticlesBackground({
         if (particle.y < 0) particle.y = canvas.height;
         if (particle.y > canvas.height) particle.y = 0;
 
+        // Use Tailwind's green-300 color
         ctx.fillStyle = isDark
           ? `rgba(255, 255, 255, ${opacity})`
           : `rgba(0, 0, 0, ${opacity})`;
@@ -198,7 +209,7 @@ export default function ParticlesBackground({
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [particleCount, noiseIntensity, particleSize, noise]);
+  }, [particleCount, noiseIntensity, particleSize, noise, isVisible]);
 
   return (
     <div
@@ -208,7 +219,13 @@ export default function ParticlesBackground({
         className
       )}
     >
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+      <canvas
+        ref={canvasRef}
+        className={cn(
+          "absolute inset-0 w-full h-full transition-opacity duration-1000",
+          isVisible ? "opacity-100" : "opacity-0"
+        )}
+      />
       <div className="relative z-0 w-full h-full">{children}</div>
     </div>
   );

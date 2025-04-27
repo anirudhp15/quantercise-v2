@@ -30,7 +30,7 @@
 }
 
 body {
-  background-color: var(--gray-950);
+  background-color: black;
   color: var(--gray-300);
   font-family: var(--font-geist-sans);
 }
