@@ -94,7 +94,7 @@ const Footer = () => {
   return (
     <footer
       id="footer"
-      className="border-t border-gray-800/40 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+      className="border-t-2 border-gray-700/40 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60"
     >
       <div className="container mx-auto max-w-screen-xl px-4 sm:px-6 py-12 sm:py-16">
         <motion.div
