@@ -6,11 +6,6 @@ import { getAuth } from "@clerk/nextjs/server"; // Import Clerk's getAuth
 
 export const runtime = "edge"; // Use edge runtime for streaming
 
-// IMPORTANT: Generate a random UUID for anonymous users rather than using a hardcoded one
-function getAnonProfileId() {
-  return `anon-${uuidv4()}`;
-}
-
 // Initialize Supabase client with Edge compatibility options
 const supabase = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -61,14 +56,15 @@ const supabase = createClient<Database>(
 );
 
 // Helper to check if an error is related to connectivity issues
-function isConnectionError(error: any): boolean {
-  return (
-    error instanceof Error &&
-    (error.message.includes("fetch failed") ||
-      error.message.includes("network") ||
-      error.message.includes("timeout"))
-  );
-}
+// Removed unused function
+// function isConnectionError(error: unknown): boolean {
+//   return (
+//     error instanceof Error &&
+//     (error.message.includes("fetch failed") ||
+//       error.message.includes("network") ||
+//       error.message.includes("timeout"))
+//   );
+// }
 
 // Define the URL of your Python LangServe server
 const LANGSERVE_URL =
@@ -113,8 +109,8 @@ async function ensureUserProfile(clerkId: string | null): Promise<string> {
     }
 
     return newProfile.id;
-  } catch (error) {
-    console.error("Error ensuring user profile:", error);
+  } catch {
+    console.error("Error ensuring user profile:");
     return await createTemporaryProfile();
   }
 }
@@ -186,7 +182,7 @@ export async function POST(req: NextRequest) {
     try {
       if (isNewThread) {
         // First, handle clerkId situation
-        let clerkIdToUse = clerkId || null; // Use null if no clerk ID
+        const clerkIdToUse = clerkId || null; // Use const instead of let
         console.log(
           `Creating new thread for clerk_id: ${clerkIdToUse || "anonymous"}`
         );
@@ -219,7 +215,7 @@ export async function POST(req: NextRequest) {
                 mode: mode,
                 title: `New ${mode} chat`, // Default title
                 updated_at: new Date().toISOString(),
-              } as any);
+              });
 
             if (insertError) {
               console.error("Failed to create thread record:", insertError);
@@ -268,7 +264,7 @@ export async function POST(req: NextRequest) {
           config: {},
           kwargs: {},
         }),
-        // @ts-ignore // Needed for duplex in some edge runtimes
+        // @ts-expect-error // Use @ts-expect-error instead of @ts-ignore
         duplex: "half",
       });
 

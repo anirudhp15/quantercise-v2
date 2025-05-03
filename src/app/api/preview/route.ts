@@ -82,8 +82,10 @@ export async function POST(req: Request) {
       if (savedPreview) {
         try {
           // Call save_content_metadata function with all the settings
-          const { data: savedMetadata, error: metaError } =
-            await supabaseAdmin.rpc("save_content_metadata", {
+          // const { data: savedMetadata, error: metaError } = // Commented out unused variable
+          const { error: metaError } = await supabaseAdmin.rpc(
+            "save_content_metadata",
+            {
               p_thread_id: threadId,
               p_preview_id: savedPreview,
               p_content_type:
@@ -95,7 +97,8 @@ export async function POST(req: Request) {
               p_subject_area: subjectArea || null,
               p_tags: tags && Array.isArray(tags) ? tags : null,
               p_custom_settings: finalMetadata,
-            });
+            }
+          );
 
           if (metaError) {
             console.warn("Error saving extended metadata:", metaError);
@@ -156,11 +159,10 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in preview API:", error);
-    return NextResponse.json(
-      { error: error.message || "An unexpected error occurred" },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : "An unexpected error occurred";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
