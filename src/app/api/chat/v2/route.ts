@@ -47,9 +47,8 @@ const supabase = createClient<Database>(
           }
         }
 
-        // This should never be reached due to the throw in the catch block,
-        // but TypeScript needs a return value
-        return null as any;
+        // Throw an error if all retries failed, instead of returning null
+        throw new Error(`Failed to fetch ${url} after ${MAX_RETRIES} attempts`);
       },
     },
   }

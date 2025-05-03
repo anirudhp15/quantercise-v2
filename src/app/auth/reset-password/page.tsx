@@ -29,8 +29,12 @@ export default function ResetPasswordPage() {
       if (error) throw error;
 
       setMessage("Check your email for the password reset link");
-    } catch (error: any) {
-      setError(error?.message || "An error occurred. Please try again.");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "An error occurred. Please try again.";
+      setError(errorMessage);
       console.error("Error resetting password:", error);
     } finally {
       setIsLoading(false);
@@ -60,7 +64,7 @@ export default function ResetPasswordPage() {
             Reset your password
           </h1>
           <p className="text-gray-400">
-            We'll send you an email with a link to reset your password
+            We&apos;ll send you an email with a link to reset your password
           </p>
         </div>
 

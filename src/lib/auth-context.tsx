@@ -15,9 +15,22 @@ interface AuthContextProps {
   session: Session | null;
   isLoading: boolean;
   error: any;
+  signIn: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextProps>({} as AuthContextProps);
+const AuthContext = createContext<AuthContextProps>({
+  user: null,
+  session: null,
+  isLoading: true,
+  error: null,
+  signIn: async () => {
+    throw new Error("signIn function not yet initialized");
+  },
+  signOut: async () => {
+    throw new Error("signOut function not yet initialized");
+  },
+});
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -79,8 +92,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     window.location.href = "/";
   };
 
-  // Simplified value for now, add setters back if used
-  const value = { user, session, isLoading, error };
+  // Restore signIn and signOut to the context value
+  const value = { user, session, isLoading, error, signIn, signOut };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

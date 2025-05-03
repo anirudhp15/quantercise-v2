@@ -59,8 +59,13 @@ export default function UpdatePasswordPage() {
       setTimeout(() => {
         router.push("/auth/login");
       }, 2000);
-    } catch (error: any) {
-      setError(error?.message || "An error occurred. Please try again.");
+    } catch (error: unknown) {
+      // Add type guard
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "An error occurred. Please try again.";
+      setError(errorMessage);
       console.error("Error updating password:", error);
     } finally {
       setIsLoading(false);

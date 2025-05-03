@@ -46,15 +46,14 @@ const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
         }
       }
 
-      // This should never be reached due to the throw in the catch block,
-      // but TypeScript needs a return value
-      return null as any;
+      // Throw an error if all retries failed
+      throw new Error(`Failed to fetch ${url} after ${MAX_RETRIES} attempts`);
     },
   },
 });
 
 // Helper to check if an error is related to connectivity issues
-function isConnectionError(error: any): boolean {
+function isConnectionError(error: unknown): boolean {
   return (
     error instanceof Error &&
     (error.message.includes("fetch failed") ||
@@ -62,6 +61,10 @@ function isConnectionError(error: any): boolean {
       error.message.includes("timeout"))
   );
 }
+
+// Define types based on Supabase schema
+type Thread = Database["public"]["Tables"]["threads"]["Row"];
+type Message = Database["public"]["Tables"]["messages"]["Row"];
 
 export async function GET(
   req: NextRequest,
@@ -118,7 +121,7 @@ export async function GET(
 
     if (id) {
       // Get a specific thread
-      let thread = null;
+      let thread: Thread | null = null;
       let threadError = null;
 
       try {
@@ -168,7 +171,7 @@ export async function GET(
       }
 
       // Get messages for the thread
-      let messages: any[] = [];
+      let messages: Message[] = [];
 
       try {
         const response = await supabase
@@ -223,7 +226,7 @@ export async function GET(
       if (process.env.NODE_ENV === "development" && !clerkId) {
         console.log("Development mode: returning all threads");
 
-        let allThreads: any[] = [];
+        let allThreads: Thread[] = [];
 
         try {
           const response = await supabase
@@ -262,7 +265,7 @@ export async function GET(
       }
 
       // Get all threads for the user
-      let threads: any[] = [];
+      let threads: Thread[] = [];
 
       try {
         const response = await supabase
@@ -307,7 +310,7 @@ export async function GET(
           : {}),
       });
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error in GET /api/threads:", error);
     return NextResponse.json(
       { error: "Internal server error", threads: [] },
