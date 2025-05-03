@@ -31,7 +31,6 @@ import {
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme-context";
 import { useClerkSupabase } from "@/lib/hooks/use-clerk-supabase";
-import { Message, MessageAttachment } from "@/lib/langgraph/types";
 import { toast } from "@/components/ui/use-toast";
 import PreviewPane from "@/components/preview/PreviewPane";
 import { useUser } from "@clerk/nextjs";
@@ -41,6 +40,9 @@ import { HighlightedInput } from "@/components/ui/highlighted-input";
 import MathRenderer from "@/components/MathRenderer";
 import { LessonSettings } from "@/types";
 import { useDashboard } from "@/contexts/DashboardContext";
+import { getAuth } from "@clerk/nextjs/server";
+import { createClient } from "@supabase/supabase-js";
+import { Message, MessageAttachment } from "@/types/chat";
 
 const messageVariants = {
   hidden: { opacity: 0, y: 10 },
