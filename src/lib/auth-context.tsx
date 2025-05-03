@@ -1,25 +1,63 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 
-type AuthContextType = {
+interface AuthContextProps {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signOut: () => Promise<void>;
-  error: string | null;
-};
+  error: any;
+}
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextProps>({} as AuthContextProps);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<any>(null);
+
+  useEffect(() => {
+    const getSession = async () => {
+      try {
+        const { data: authData, error: authError } =
+          await supabase.auth.getSession();
+        if (authError) throw authError;
+
+        // Use the setters here if needed in the future
+        // setSession(authData.session);
+        // setUser(authData.session?.user ?? null);
+      } catch (err) {
+        // setError(err);
+        console.error("Error getting session:", err);
+      } finally {
+        // setIsLoading(false);
+      }
+    };
+
+    getSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        // Use the setters here if needed in the future
+        // setSession(session);
+        // setUser(session?.user ?? null);
+        // setIsLoading(false);
+      }
+    );
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -41,14 +79,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     window.location.href = "/";
   };
 
-  const value = {
-    user,
-    session,
-    isLoading,
-    signIn,
-    signOut,
-    error,
-  };
+  // Simplified value for now, add setters back if used
+  const value = { user, session, isLoading, error };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -40,8 +40,6 @@ import { HighlightedInput } from "@/components/ui/highlighted-input";
 import MathRenderer from "@/components/MathRenderer";
 import { LessonSettings } from "@/types";
 import { useDashboard } from "@/contexts/DashboardContext";
-import { getAuth } from "@clerk/nextjs/server";
-import { createClient } from "@supabase/supabase-js";
 import { Message, MessageAttachment } from "@/types/chat";
 
 const messageVariants = {

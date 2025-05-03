@@ -36,12 +36,12 @@ export const HighlightedInputWithSettings = forwardRef<
     const [showInstructions, setShowInstructions] = useState(false);
 
     // The default settings
-    const defaultSettings: LessonSettings = {
-      contentType: "worksheet",
-      gradeLevel: "8",
-      length: "standard",
-      tone: "academic",
-    };
+    // const defaultSettings: LessonSettings = {
+    //   contentType: "worksheet",
+    //   gradeLevel: "8",
+    //   length: "standard",
+    //   tone: "academic",
+    // };
 
     // Handler for settings changes
     const handleSettingsChange = (newSettings: LessonSettings) => {

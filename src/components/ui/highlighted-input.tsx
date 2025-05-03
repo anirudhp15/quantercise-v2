@@ -4,13 +4,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import * as Select from "@radix-ui/react-select";
 import {
   Check,
-  ChevronDown,
   Presentation,
-  File,
   Book,
   FileSpreadsheet,
-  CalendarCheck,
-  ListChecks,
   BookOpen,
   Puzzle,
   FileText,
@@ -287,97 +283,55 @@ export const HighlightedInput = forwardRef<
         return;
       }
 
-      // Create a working copy we can manipulate
-      let workingText = text;
-      const segments: Array<{ text: string; isHighlighted: boolean }> = [];
-
-      // Process each keyword - handling longest keywords first to avoid nested matches
-      const sortedKeywords = [...KEYWORDS].sort((a, b) => b.length - a.length);
-
-      // First pass: collect all matches with their positions
-      const matches: Array<{ keyword: string; index: number }> = [];
-
-      for (const keyword of sortedKeywords) {
-        // Convert spaces to \s+ to match any whitespace variations
-        const escapedKeyword = keyword.replace(/\s+/g, "\\s+");
-        const regex = new RegExp(`\\b${escapedKeyword}\\b`, "gi");
-        let match;
-
-        while ((match = regex.exec(workingText)) !== null) {
-          matches.push({
-            keyword: match[0],
-            index: match.index,
-          });
-        }
-      }
-
-      // Sort matches by index
-      matches.sort((a, b) => a.index - b.index);
-
-      // Process matches in order, avoiding overlaps
+      const regex = new RegExp(`\\b(${KEYWORDS.join("|")})\\b`, "gi");
+      const parts: React.ReactNode[] = [];
       let lastIndex = 0;
+      let match;
 
-      for (const match of matches) {
-        // Check if this match overlaps with a previous one
-        if (match.index < lastIndex) continue;
+      while ((match = regex.exec(text)) !== null) {
+        const keyword = match[0];
+        const offset = match.index;
 
         // Add the text before the match
-        if (match.index > lastIndex) {
-          segments.push({
-            text: workingText.substring(lastIndex, match.index),
-            isHighlighted: false,
-          });
+        if (lastIndex < offset) {
+          parts.push(text.substring(lastIndex, offset));
         }
 
         // Add the highlighted match
-        segments.push({
-          text: match.keyword,
-          isHighlighted: true,
-        });
+        parts.push(
+          <motion.span
+            key={`highlight-${offset}`}
+            initial={{ backgroundColor: "transparent" }}
+            animate={{ backgroundColor: "rgba(75, 85, 99, 0.5)" }}
+            transition={{ duration: 0.2 }}
+            className="rounded px-1 bg-gray-600/50 text-white"
+          >
+            {keyword}
+          </motion.span>
+        );
 
-        lastIndex = match.index + match.keyword.length;
+        lastIndex = offset + keyword.length;
       }
 
-      // Add any remaining text
-      if (lastIndex < workingText.length) {
-        segments.push({
-          text: workingText.substring(lastIndex),
-          isHighlighted: false,
-        });
+      // Add any remaining text after the last match
+      if (lastIndex < text.length) {
+        parts.push(text.substring(lastIndex));
       }
 
-      // Convert segments to React nodes
-      const result = segments.map((segment, index) => {
-        if (segment.isHighlighted) {
-          return (
-            <motion.span
-              key={`highlight-${index}`}
-              initial={{ backgroundColor: "transparent" }}
-              animate={{ backgroundColor: "rgba(75, 85, 99, 0.5)" }}
-              transition={{ duration: 0.2 }}
-              className="rounded px-1 bg-gray-600/50 text-white"
-            >
-              {segment.text}
-            </motion.span>
-          );
-        }
-        return segment.text;
-      });
-
-      setHighlightedText(result);
+      setHighlightedText(parts);
     };
 
     // Process text when value changes
     useEffect(() => {
       processText(value);
-    }, [value]);
+    }, [value, processText]);
 
     // Update cursor position when text or cursor position changes
     useEffect(() => {
-      if (resolvedRef.current === document.activeElement) {
-        setTimeout(updateCursorPosition, 0);
+      if (resolvedRef.current && lastCursorPos !== null) {
+        updateCursorPosition();
       }
-    }, [value, lastCursorPos]);
+    }, [value, lastCursorPos, resolvedRef, updateCursorPosition]);
 
     // Set up focus/blur event listeners
     useEffect(() => {
