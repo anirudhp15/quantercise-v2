@@ -153,11 +153,9 @@ export default function ParticlesBackground({
     }));
 
     const animate = () => {
-      const isDark = document.documentElement.classList.contains("dark");
+      const isDark = true; // Force dark mode
 
-      ctx.fillStyle = isDark
-        ? "rgba(0, 0, 0, 0.1)"
-        : "rgba(255, 255, 255, 0.1)";
+      ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       for (const particle of particles) {
@@ -169,7 +167,7 @@ export default function ParticlesBackground({
         }
 
         const opacity =
-          Math.sin((particle.life / particle.maxLife) * Math.PI) * 0.15;
+          Math.sin((particle.life / particle.maxLife) * Math.PI) * 0.3; // Increased opacity
 
         const n = noise.simplex3(
           particle.x * noiseIntensity,
@@ -189,10 +187,7 @@ export default function ParticlesBackground({
         if (particle.y < 0) particle.y = canvas.height;
         if (particle.y > canvas.height) particle.y = 0;
 
-        // Use Tailwind's green-300 color
-        ctx.fillStyle = isDark
-          ? `rgba(255, 255, 255, ${opacity})`
-          : `rgba(0, 0, 0, ${opacity})`;
+        ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
         ctx.fill();
@@ -215,7 +210,7 @@ export default function ParticlesBackground({
     <div
       className={cn(
         "relative w-full min-h-screen overflow-hidden",
-        "bg-background",
+        "bg-black",
         className
       )}
     >

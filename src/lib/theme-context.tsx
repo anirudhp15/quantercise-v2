@@ -28,11 +28,11 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     // Update CSS variables based on theme
     const root = document.documentElement;
     if (theme === "teacher") {
-      root.style.setProperty("--primary", "#60a5fa"); // blue-400
+      root.style.setProperty("--primary", "#FFFFFF"); // blue-400
       root.style.setProperty("--accent", "#1e40af"); // blue-800
       root.style.setProperty("--muted", "#1e3a8a"); // blue-900
     } else {
-      root.style.setProperty("--primary", "#86efac"); // green-300
+      root.style.setProperty("--primary", "#FFFFFF"); // green-300
       root.style.setProperty("--accent", "#374151"); // gray-700
       root.style.setProperty("--muted", "#374151"); // gray-700
     }

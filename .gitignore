@@ -40,3 +40,38 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# clerk configuration (can include secrets)
+/.clerk/
+
+# LangGraph API
+.langgraph_api
+
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+*.log
+
+# Project specific python files/folders (if deployed separately)
+/langgraph/
+quantercise_graph.py
+server.py
+requirements.txt
+integration_test.py
+
+# Scripts and SQL (if not needed for build)
+/scripts/
+/sql/
+fix-thread-schema.sh
+migrate-db.sh
+migrate-clerk-id.js
+setup-env.js
+
+# Temporary files
+fixes_summary.txt
+
+# Textbooks
+/quantercise-v2-assets

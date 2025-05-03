@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { Menu, X, Boxes, LogOut } from "lucide-react";
+import { Menu, X, Boxes } from "lucide-react";
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/lib/auth-context";
+import { UserButton, SignInButton } from "@clerk/nextjs";
+import { useClerkSupabase } from "@/lib/hooks/use-clerk-supabase";
 
 // Helper function for smooth scrolling
 const scrollTo = (id: string) => {
@@ -29,7 +30,7 @@ type NavItem = {
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { scrollY } = useScroll();
-  const { user, signOut, isLoading } = useAuth();
+  const { isSignedIn, isLoaded } = useClerkSupabase();
 
   // Transform the container max-width based on scroll - now shrinks instead of grows
   const containerMaxWidth = useTransform(scrollY, [0, 100], ["100%", "70%"]);
@@ -41,12 +42,7 @@ const Navbar = () => {
     { name: "Info", action: () => scrollTo("details") },
     { name: "Pricing", action: () => scrollTo("pricing") },
     { name: "Our Mission", href: "/goal" },
-    // { name: "Hit Us Up", action: () => scrollTo("footer") },
   ];
-
-  const handleSignOut = async () => {
-    await signOut();
-  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 w-full">
@@ -60,13 +56,13 @@ const Navbar = () => {
           marginRight: "auto",
           borderRadius: containerRadius,
         }}
-        className="transition-all duration-200 ease-in-out border border-gray-700/40 bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60"
+        className="transition-all duration-200 ease-in-out border-y border-gray-800 bg-black/80 backdrop-blur-lg supports-[backdrop-filter]:bg-black/60"
       >
         <div className="flex h-14 items-center justify-between">
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2">
-              <Boxes className="h-6 w-6 text-primary" />
-              <span className="font-bold tracking-tighter text-primary text-xl">
+              <Boxes className="h-6 w-6 text-white" />
+              <span className="font-bold tracking-tighter text-white text-xl">
                 Quantercise
               </span>
             </Link>
@@ -81,7 +77,9 @@ const Navbar = () => {
                     {item.href ? (
                       <Link
                         href={item.href}
-                        className={cn(navigationMenuTriggerStyle())}
+                        className={cn(
+                          "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors text-gray-300 hover:text-white hover:bg-white/10 focus:bg-white/10 focus:text-white focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+                        )}
                       >
                         {item.name}
                       </Link>
@@ -93,7 +91,7 @@ const Navbar = () => {
                           }
                         }}
                         className={cn(
-                          "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
+                          "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors text-gray-300 hover:text-white hover:bg-white/10 focus:bg-white/10 focus:text-white focus:outline-none disabled:pointer-events-none disabled:opacity-50"
                         )}
                       >
                         {item.name}
@@ -106,37 +104,42 @@ const Navbar = () => {
           </div>
 
           <div className="hidden lg:flex text-sm items-center space-x-3">
-            {user ? (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full"
-                  onClick={handleSignOut}
-                  disabled={isLoading}
-                >
-                  <LogOut className="h-4 w-4 mr-1" />
-                  Logout
-                </Button>
-                <Link href="/dashboard">
-                  <Button variant="default" size="sm" className="rounded-full">
-                    Dashboard
-                  </Button>
-                </Link>
-              </>
+            {isLoaded ? (
+              isSignedIn ? (
+                <>
+                  <Link href="/dashboard">
+                    <Button
+                      size="sm"
+                      className=" rounded-full  bg-white text-black hover:bg-gray-200 font-medium"
+                    >
+                      Dashboard
+                    </Button>
+                  </Link>
+                  <UserButton afterSignOutUrl="/" />
+                </>
+              ) : (
+                <>
+                  <SignInButton mode="modal">
+                    <Button
+                      size="sm"
+                      className=" rounded-full bg-gray-950 text-white hover:bg-gray-900"
+                    >
+                      Sign in
+                    </Button>
+                  </SignInButton>
+                  <Link href="/sign-up">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="rounded-full bg-white text-black hover:bg-gray-200"
+                    >
+                      Try for Free
+                    </Button>
+                  </Link>
+                </>
+              )
             ) : (
-              <>
-                <Link href="/auth/login">
-                  <Button variant="outline" size="sm" className="rounded-full">
-                    Login
-                  </Button>
-                </Link>
-                <Link href="/auth/signup">
-                  <Button variant="default" size="sm" className="rounded-full">
-                    Try for Free
-                  </Button>
-                </Link>
-              </>
+              <div className="h-9 w-[120px] animate-pulse rounded-md bg-gray-800"></div>
             )}
           </div>
 
@@ -145,7 +148,7 @@ const Navbar = () => {
             <Button
               variant="ghost"
               size="icon"
-              className="text-primary"
+              className="text-white hover:bg-white/10"
               onClick={() => setIsOpen(true)}
             >
               <Menu className="h-6 w-6" />
@@ -157,7 +160,7 @@ const Navbar = () => {
 
       {/* Mobile menu overlay */}
       <motion.div
-        className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 lg:hidden"
+        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 lg:hidden"
         initial={{ opacity: 0 }}
         animate={{ opacity: isOpen ? 1 : 0 }}
         transition={{ duration: 0.2 }}
@@ -166,36 +169,37 @@ const Navbar = () => {
 
       {/* Mobile menu panel */}
       <motion.div
-        className="fixed inset-y-0 right-0 w-full max-w-sm bg-background border-l border-border z-50 lg:hidden"
-        initial={{ x: "100%" }}
-        animate={{ x: isOpen ? 0 : "100%" }}
-        transition={{ type: "spring", damping: 20, stiffness: 200 }}
+        className="fixed inset-0 w-screen h-full bg-black border-l border-gray-800 z-50 lg:hidden"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isOpen ? 1 : 0 }}
+        transition={{ type: "spring", damping: 25, stiffness: 150 }}
+        style={{ pointerEvents: isOpen ? "auto" : "none" }}
       >
-        <div className="flex h-14 items-center justify-between px-4 border-b border-border">
-          <span className="font-semibold">Menu</span>
+        <div className="flex h-14 items-center justify-between px-4 border-b border-gray-800">
+          <span className="font-semibold text-white">Menu</span>
           <Button
             variant="ghost"
             size="icon"
-            className="text-primary"
+            className="text-white hover:bg-white/10"
             onClick={() => setIsOpen(false)}
           >
             <X className="h-5 w-5" />
           </Button>
         </div>
 
-        <nav className="p-4">
-          <div className="flex flex-col space-y-3">
+        <nav className="p-4 flex flex-col justify-between h-[calc(100%-3.5rem)]">
+          <div className="flex flex-col space-y-5 pt-4">
             {navItems.map((item) => (
               <motion.div
                 key={item.name}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: isOpen ? 1 : 0, x: isOpen ? 0 : 20 }}
-                transition={{ duration: 0.2 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: isOpen ? 1 : 0, y: isOpen ? 0 : 10 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
               >
                 {item.href ? (
                   <Link
                     href={item.href}
-                    className="block py-2 text-lg font-medium hover:text-primary transition-colors"
+                    className="block py-3 text-xl font-medium text-gray-300 hover:text-white transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
                     {item.name}
@@ -208,7 +212,7 @@ const Navbar = () => {
                       }
                       setIsOpen(false);
                     }}
-                    className="block w-full text-left py-2 text-lg font-medium hover:text-primary transition-colors"
+                    className="block w-full text-left py-3 text-xl font-medium text-gray-300 hover:text-white transition-colors"
                   >
                     {item.name}
                   </button>
@@ -217,38 +221,43 @@ const Navbar = () => {
             ))}
           </div>
 
-          <div className="mt-8 text-sm space-y-3">
-            {user ? (
-              <>
-                <Link href="/dashboard" onClick={() => setIsOpen(false)}>
-                  <Button variant="outline" className="w-full rounded-full">
-                    Dashboard
-                  </Button>
-                </Link>
-                <Button
-                  variant="destructive"
-                  className="w-full rounded-full"
-                  onClick={() => {
-                    handleSignOut();
-                    setIsOpen(false);
-                  }}
-                  disabled={isLoading}
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </Button>
-              </>
+          <div className="mt-auto pb-8 text-sm">
+            {isLoaded ? (
+              isSignedIn ? (
+                <div className="flex items-center gap-3">
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setIsOpen(false)}
+                    className="flex-1"
+                  >
+                    <Button
+                      variant="default"
+                      className="w-full rounded-full text-black"
+                    >
+                      Dashboard
+                    </Button>
+                  </Link>
+                  <UserButton afterSignOutUrl="/" />
+                </div>
+              ) : (
+                <>
+                  <SignInButton mode="modal">
+                    <Button
+                      variant="outline"
+                      className="w-full rounded-full border-white/20 text-white hover:bg-white/10 hover:text-white"
+                    >
+                      Sign in
+                    </Button>
+                  </SignInButton>
+                  <Link href="/sign-up" onClick={() => setIsOpen(false)}>
+                    <Button className="w-full mt-3 rounded-full bg-white text-black hover:bg-gray-200">
+                      Try for Free
+                    </Button>
+                  </Link>
+                </>
+              )
             ) : (
-              <>
-                <Link href="/auth/login" onClick={() => setIsOpen(false)}>
-                  <Button variant="outline" className="w-full rounded-full">
-                    Login
-                  </Button>
-                </Link>
-                <Link href="/auth/signup" onClick={() => setIsOpen(false)}>
-                  <Button className="w-full rounded-full">Try for Free</Button>
-                </Link>
-              </>
+              <div className="h-9 w-full animate-pulse rounded-md bg-gray-800"></div>
             )}
           </div>
         </nav>

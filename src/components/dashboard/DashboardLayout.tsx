@@ -1,95 +1,141 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Loader2, Menu, ChevronLeft, ChevronRight } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState } from "react";
+import {
+  Menu,
+  ArrowLeftToLine,
+  ArrowRightToLine,
+  Boxes,
+  Plus,
+  MessageSquare,
+  LayoutDashboard,
+  Settings,
+  Sun,
+  Moon,
+  GraduationCap,
+  School,
+} from "lucide-react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useAuth } from "@/lib/auth-context";
 import Sidebar from "@/components/dashboard/Sidebar";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useTheme } from "@/lib/theme-context";
+import { DashboardProvider, useDashboard } from "@/contexts/DashboardContext";
 
-export const DashboardLayout = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
+// Inner layout component to access context
+const DashboardLayoutInner = ({ children }: { children: React.ReactNode }) => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const { user, isLoading, session } = useAuth();
+  const { isCollapsed, setIsCollapsed } = useDashboard();
   const router = useRouter();
+  const { theme } = useTheme();
 
-  useEffect(() => {
-    // Redirect to login if user is not authenticated
-    if (!isLoading && !user) {
-      console.log("Dashboard: No user found, redirecting to login");
-      router.push("/auth/login?redirect=/dashboard");
-    } else if (!isLoading && user) {
-      console.log("Dashboard: User authenticated:", user.email);
-      console.log("Dashboard: Session exists:", !!session);
-    }
-  }, [user, isLoading, router, session]);
+  // Navigation items for the collapsed sidebar
+  const navItems = [
+    {
+      name: "Dashboard",
+      href: "/dashboard",
+      icon: <LayoutDashboard className="h-4 w-4" />,
+    },
+    {
+      name: "Chats",
+      href: "/dashboard/chats",
+      icon: <MessageSquare className="h-4 w-4" />,
+    },
+    {
+      name: "Settings",
+      href: "/dashboard/settings",
+      icon: <Settings className="h-4 w-4" />,
+    },
+  ];
 
-  // If still loading or no user, show loading state
-  if (isLoading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#343541] text-white">
-        <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="h-10 w-10 animate-spin text-gray-300" />
-          <p className="text-sm text-gray-400">Loading dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If not loading and no user, show error state
-  if (!user) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#343541] text-white">
-        <div className="flex flex-col items-center space-y-4">
-          <p className="text-lg text-red-400">Authentication required</p>
-          <Button
-            onClick={() => router.push("/auth/login?redirect=/dashboard")}
-            className="bg-gray-700 hover:bg-gray-600 text-white"
-          >
-            Go to Login
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const startNewChat = async () => {
+    router.push(`/dashboard/chats/new?mode=${theme}`);
+  };
 
   return (
-    <div className="h-screen flex overflow-hidden bg-[#343541]">
+    <div className="h-screen flex overflow-hidden">
       {/* Desktop sidebar */}
       <motion.div
-        className="hidden fixed h-full lg:block z-50"
-        initial={false}
+        className="hidden fixed h-full lg:block z-40"
+        initial={{ x: "-100%" }}
         animate={{
-          width: isCollapsed ? "64px" : "256px",
-          transition: { duration: 0.3, ease: "easeInOut" },
+          x: 0,
+          width: isCollapsed ? "0px" : "256px",
+          overflow: "hidden",
+          transition: {
+            x: { duration: 0.5, ease: "easeInOut", delay: 0.5 },
+            width: { duration: 0.05, ease: "easeInOut" },
+          },
         }}
       >
         <Sidebar
           isMobileSidebarOpen={false}
           setMobileSidebarOpen={() => {}}
           isCollapsed={isCollapsed}
+          setIsCollapsed={setIsCollapsed}
         />
-
-        {/* Collapse toggle button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute -right-16 top-4 z-50 rounded-full bg-[#202123] border border-gray-700 text-gray-300 hover:text-white hover:bg-[#202123]"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-        >
-          {isCollapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
-          )}
-        </Button>
       </motion.div>
+
+      {/* Floating icons when collapsed */}
+      {isCollapsed && (
+        <motion.div
+          className="hidden lg:flex fixed left-0 h-full w-16 z-40 flex-col py-4 items-center"
+          initial={{ x: "-100%" }}
+          animate={{ x: 0 }}
+          transition={{
+            duration: 0.5,
+            ease: "easeInOut",
+          }}
+        >
+          <div className="flex flex-col items-center gap-4 w-full">
+            <Link
+              href="/"
+              className={`p-3 text-gray-300 hover:text-white ${
+                theme === "student" ? "bg-green-600" : "bg-blue-600"
+              } rounded-md`}
+            >
+              <Boxes className="h-4 w-4" />
+              {/* Collapse toggle button */}
+            </Link>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-gray-300 hover:text-white hover:bg-gray-800/50"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+            >
+              {isCollapsed ? (
+                <ArrowRightToLine className="h-4 w-4" />
+              ) : (
+                <ArrowLeftToLine className="h-4 w-4" />
+              )}
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-lg bg-gray-800/50 border border-gray-700 text-gray-300 hover:text-white hover:bg-gray-700/80 shadow-md "
+              onClick={startNewChat}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+
+            <div className=" flex flex-col items-center gap-4">
+              {navItems.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="p-3 text-gray-300 hover:text-white hover:bg-gray-800/50 rounded-md"
+                >
+                  {item.icon}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Mobile sidebar trigger */}
       <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
@@ -97,7 +143,7 @@ export const DashboardLayout = ({
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden fixed top-4 left-4 z-40 text-gray-300 hover:text-white bg-transparent hover:bg-[#202123]/60"
+            className="lg:hidden fixed top-4 left-4 z-[60] text-gray-300 hover:text-white bg-transparent hover:bg-[#202123]/60"
           >
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle menu</span>
@@ -108,6 +154,7 @@ export const DashboardLayout = ({
             isMobileSidebarOpen={isMobileOpen}
             setMobileSidebarOpen={setIsMobileOpen}
             isCollapsed={false}
+            setIsCollapsed={() => {}}
           />
         </SheetContent>
       </Sheet>
@@ -117,7 +164,7 @@ export const DashboardLayout = ({
         className="flex-1 h-screen overflow-y-auto"
         initial={false}
         animate={{
-          paddingLeft: isCollapsed ? "64px" : "256px",
+          paddingLeft: isCollapsed ? "0px" : "256px",
         }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
       >
@@ -131,5 +178,18 @@ export const DashboardLayout = ({
         </motion.div>
       </motion.main>
     </div>
+  );
+};
+
+// Export the main layout component wrapped in the provider
+export const DashboardLayout = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  return (
+    <DashboardProvider>
+      <DashboardLayoutInner>{children}</DashboardLayoutInner>
+    </DashboardProvider>
   );
 };

@@ -1,55 +1,74 @@
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
+import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
-export async function middleware(req: NextRequest) {
-  try {
-    // Create a response that will be used to modify cookies before returning
-    const res = NextResponse.next();
+// Define public routes that don't require authentication
+const publicPaths = [
+  "/",
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/api/webhooks/clerk",
+  "/api/public(.*)",
+];
 
-    // Create Supabase client with request and response objects
-    const supabase = createMiddlewareClient({ req, res });
+// Critical API paths that should always be protected
+const criticalApiPaths = [
+  "/api/chats",
+  "/api/chats/",
+  "/api/chats/new",
+  "/api/threads",
+  "/api/threads/",
+  "/api/threads/new",
+  "/api/threads/delete",
+  "/api/threads/update",
+  "/api/threads/get",
+  "/api/threads/get-all",
+  "/api/threads/get-by-id",
+  "/api/threads/get-by-clerk-id",
+  "/api/threads/get-by-group-name",
+];
 
-    // Get the session without refreshing
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+// Export the middleware
+export default clerkMiddleware(async (auth, req) => {
+  const path = req.nextUrl.pathname;
+  const isDev = process.env.NODE_ENV === "development";
+  const isApiRoute = path.startsWith("/api/");
 
-    // Debug information
-    console.log("[Middleware] Path:", req.nextUrl.pathname);
-    console.log("[Middleware] Session exists:", !!session);
+  // Check if this is a critical API path that should always be protected
+  const isCriticalApi = criticalApiPaths.some(
+    (criticalPath) =>
+      path === criticalPath || path.startsWith(`${criticalPath}/`)
+  );
 
-    const isDashboardRoute = req.nextUrl.pathname.startsWith("/dashboard");
-    const isAuthRoute = req.nextUrl.pathname.startsWith("/auth");
-    const isApiRoute = req.nextUrl.pathname.startsWith("/api");
-
-    // If we have a session and user is on an auth page, redirect to dashboard
-    if (session && isAuthRoute) {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
+  // Check if this is a public path that should never require auth
+  const isPublic = publicPaths.some((publicPath) => {
+    if (publicPath.includes("(.*)")) {
+      const basePath = publicPath.replace("(.*)", "");
+      return path === basePath || path.startsWith(basePath);
     }
+    return path === publicPath;
+  });
 
-    // If we don't have a session and user is trying to access protected routes
-    if (!session && (isDashboardRoute || isApiRoute)) {
-      // Store the original URL to redirect back after login
-      const redirectUrl = req.nextUrl.pathname + req.nextUrl.search;
-      const loginUrl = new URL("/auth/login", req.url);
-      loginUrl.searchParams.set("redirectTo", redirectUrl);
-
-      return NextResponse.redirect(loginUrl);
-    }
-
-    // Return the response with updated cookies
-    return res;
-  } catch (error) {
-    console.error("[Middleware] Error:", error);
-    // On error, redirect to login for protected routes
-    if (req.nextUrl.pathname.startsWith("/dashboard")) {
-      return NextResponse.redirect(new URL("/auth/login", req.url));
-    }
+  // Skip authentication for non-critical API routes in development mode
+  if (isDev && isApiRoute && !isCriticalApi) {
+    console.log(`[DEV] Bypassing auth for non-critical API route: ${path}`);
     return NextResponse.next();
   }
-}
 
+  // If the route is not public, protect it
+  if (!isPublic) {
+    await auth.protect();
+  }
+
+  return NextResponse.next();
+});
+
+// Configure which routes use the middleware
 export const config = {
-  matcher: ["/dashboard/:path*", "/auth/:path*", "/api/:path*"],
+  matcher: [
+    // Skip Next.js internals and static files
+    "/((?!_next|static|.*\\.(?:jpg|jpeg|gif|png|svg|ico)).*)",
+    // Always run for API routes
+    "/api/(.*)",
+    "/trpc/(.*)",
+  ],
 };

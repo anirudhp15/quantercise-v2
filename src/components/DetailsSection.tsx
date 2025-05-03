@@ -14,15 +14,20 @@ const DemoSection = () => {
   };
 
   return (
-    <section id="demo" className="py-16 sm:py-20 md:py-24 text-white">
-      <div className="container mx-auto max-w-screen-xl px-4 sm:px-6 space-y-12 sm:space-y-16">
+    <section
+      id="details"
+      className="py-16 sm:py-20 md:py-24 px-2 text-white bg-gradient-to-b from-gray-900/5 via-black to-gray-900/5"
+    >
+      <div className="container mx-auto max-w-screen-xl space-y-12 sm:space-y-16">
         <motion.h2
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="text-2xl sm:text-3xl md:text-5xl max-w-4xl mx-auto font-bold text-center"
         >
-          Quantercise provides tools and shortcuts for teachers and students
+          Quantercise provides shortcuts for{" "}
+          <span className="text-blue-300">teachers</span> and{" "}
+          <span className="text-green-300">students</span>.
         </motion.h2>
 
         {/* Student Feature */}
@@ -51,14 +56,13 @@ const DemoSection = () => {
             </div>
           </div>
           {/* text */}
-          <div className="flex-1 space-y-3 sm:space-y-4 max-w-lg px-4 sm:px-0">
-            <h3 className="text-2xl sm:text-3xl font-bold">
-              For teachers and educators
+          <div className="flex-1 space-y-3 sm:space-y-4 max-w-lg ">
+            <h3 className="text-2xl sm:text-3xl text-blue-300 font-bold">
+              For teachers
             </h3>
-            <p className="text-base sm:text-lg text-gray-300">
-              Auto-generate slides, worksheets, and step-by-step solutions with
-              built-in accuracy checks, so you can focus on teaching, not
-              prepping.
+            <p className="text-xs sm:text-base text-gray-300">
+              Auto-generate accurate slides, worksheets, and step-by-step
+              solutions so you spend less time prepping and more time teaching.
             </p>
           </div>
         </motion.div>
@@ -88,14 +92,15 @@ const DemoSection = () => {
             </div>
           </div>
           {/* text */}
-          <div className="flex-1 space-y-3 sm:space-y-4 max-w-lg px-4 sm:px-0">
-            <h3 className="text-2xl sm:text-3xl font-bold">
-              For students and learners
+          <div className="flex-1 space-y-3 sm:space-y-4 max-w-lg">
+            <h3 className="text-2xl sm:text-3xl text-green-300 font-bold">
+              For students
             </h3>
-            <p className="text-base sm:text-lg text-gray-300">
-              Access any K-12 math question or topic—across textbooks and
-              curricula— powered by a Langraph multi-LLM agent that guides you
-              step by step.
+            <p className="text-xs sm:text-base text-gray-300">
+              Just{" "}
+              <span className="p-1 bg-gray-700 text-white rounded-md">@</span>{" "}
+              any topic to instantly pull aligned content from our full K–12
+              math curriculum—so you're always learning what actually matters.
             </p>
           </div>
         </motion.div>

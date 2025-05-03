@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/lib/auth-context";
 
 interface PricingSectionProps {
   className?: string;
@@ -31,8 +30,6 @@ const itemVariants = {
 };
 
 export function PricingSection({ className }: PricingSectionProps) {
-  const { user } = useAuth();
-
   const plans = [
     {
       name: "Starter",
@@ -45,8 +42,8 @@ export function PricingSection({ className }: PricingSectionProps) {
         "Community support",
         "Basic analytics",
       ],
-      cta: user ? "Go to Dashboard" : "Get Started",
-      href: user ? "/dashboard" : "/auth/signup",
+      cta: "Get Started",
+      href: "/auth/signup",
     },
     {
       name: "Premium",
@@ -59,8 +56,8 @@ export function PricingSection({ className }: PricingSectionProps) {
         "Detailed performance analytics",
         "Priority support",
       ],
-      cta: user ? "Upgrade Account" : "Sign Up & Upgrade",
-      href: user ? "/dashboard/settings" : "/auth/signup?plan=premium",
+      cta: "Sign Up & Upgrade",
+      href: "/auth/signup?plan=premium",
       featured: true,
     },
     {
@@ -81,7 +78,13 @@ export function PricingSection({ className }: PricingSectionProps) {
   ];
 
   return (
-    <section id="pricing" className={cn("py-12 sm:py-16 md:py-20", className)}>
+    <section
+      id="pricing"
+      className={cn(
+        "py-12 sm:py-16 md:py-20 bg-gradient-to-b from-gray-900/5 via-black to-gray-900/5",
+        className
+      )}
+    >
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -107,7 +110,7 @@ export function PricingSection({ className }: PricingSectionProps) {
                 )}
               >
                 <CardHeader>
-                  <CardTitle className="flex flex-col items-center">
+                  <CardTitle className="flex text-gray-300 flex-col items-center">
                     <span className="text-lg sm:text-xl">{plan.name}</span>
                     <div className="mt-3 sm:mt-4">
                       <span className="text-3xl sm:text-4xl font-bold">
@@ -120,14 +123,14 @@ export function PricingSection({ className }: PricingSectionProps) {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-center text-muted-foreground mb-4 sm:mb-6 text-sm sm:text-base">
+                  <p className="text-center text-gray-300 mb-4 sm:mb-6 text-sm sm:text-base">
                     {plan.description}
                   </p>
                   <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
                     {plan.features.map((feature) => (
                       <li
                         key={feature}
-                        className="flex items-center text-sm sm:text-base"
+                        className="flex items-center text-sm sm:text-base text-gray-300"
                       >
                         <svg
                           className="h-4 w-4 text-primary mr-3 flex-shrink-0"

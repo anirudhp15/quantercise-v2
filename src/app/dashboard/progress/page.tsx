@@ -158,7 +158,7 @@ export default function ProgressPage() {
                   <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
                   <h3 className="text-sm font-medium">{day.date}</h3>
                 </div>
-                <div className="ml-6 space-y-3 border-l border-border pl-6">
+                <div className="ml-6 space-y-3 border-l  pl-6">
                   {day.activities.map((activity, i) => (
                     <div key={i} className="relative">
                       <div className="absolute -left-[22px] mt-1.5 h-3 w-3 rounded-full border-2 border-background bg-primary"></div>

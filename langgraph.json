@@ -1,0 +1,11 @@
+{
+  "name": "quantercise-v2",
+  "description": "Quantercise v2 Graph",
+  "graphs": {
+    "app": "src/lib/langgraph/graph.ts:app"
+  },
+  "dev": {
+    "host": "localhost",
+    "port": 3001
+  }
+}

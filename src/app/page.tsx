@@ -8,8 +8,8 @@ import ParticlesBackground from "@/components/ParticlesBackground";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen w-full flex-col">
-      <ParticlesBackground particleCount={1500}>
+    <main className="flex min-h-screen w-full bg-black flex-col">
+      <ParticlesBackground particleCount={3000}>
         <Navbar />
         <HeroSection />
         <DetailsSection />

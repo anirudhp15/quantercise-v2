@@ -1,224 +1,336 @@
 "use client";
 
-import React from "react";
+import { UserProfile } from "@clerk/nextjs";
+import { useClerkSupabase } from "@/lib/hooks/use-clerk-supabase";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { BarChart3, BookOpen, Clock, ArrowRight } from "lucide-react";
+  MessageSquare,
+  Loader2,
+  GraduationCap,
+  School,
+  Send,
+  Settings,
+  Plus,
+  User,
+  Cog,
+  Info,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { Database } from "@/../types/supabase";
+import { motion, AnimatePresence } from "framer-motion";
+import { HighlightedInput } from "@/components/ui/highlighted-input";
+import { useTheme } from "@/lib/theme-context";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import { useRouter } from "next/navigation";
+type Thread = Database["public"]["Tables"]["threads"]["Row"];
 
-const containerVariants = {
+// Animation variants
+const fadeIn = {
   hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
+  visible: { opacity: 1, transition: { duration: 0.3 } },
 };
 
-const itemVariants = {
+const cardVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: {
+  visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5 },
-  },
+    transition: {
+      delay: i * 0.1,
+      duration: 0.3,
+    },
+  }),
 };
 
 export default function DashboardPage() {
+  const { user, profile, isLoaded } = useClerkSupabase();
+  const [threads, setThreads] = useState<Thread[]>([]);
+  const [isLoadingThreads, setIsLoadingThreads] = useState(true);
+  const [input, setInput] = useState("");
+  const { theme } = useTheme();
+  const router = useRouter();
+
+  useEffect(() => {
+    async function fetchThreads() {
+      try {
+        setIsLoadingThreads(true);
+        const response = await fetch("/api/threads");
+        if (!response.ok) {
+          throw new Error("Failed to fetch threads");
+        }
+        const data = await response.json();
+        // Get the 5 most recent threads
+        setThreads(data.threads?.slice(0, 5) || []);
+      } catch (error) {
+        console.error("Error fetching threads:", error);
+      } finally {
+        setIsLoadingThreads(false);
+      }
+    }
+
+    fetchThreads();
+  }, []);
+
+  const startNewChat = async () => {
+    router.push(`/dashboard/chats/new?mode=${theme}`);
+  };
+
+  if (!isLoaded) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-32 w-32 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-8 p-4"
-    >
-      <div className="flex flex-col gap-4">
-        <motion.h1
-          variants={itemVariants}
-          className="text-3xl pl-16 font-bold tracking-tight"
+    <div className="min-h-screen bg-gray-950/75 text-white">
+      {/* Hero Section */}
+      <div className="w-full bg-gradient-to-b from-gray-900 to-gray-900/5">
+        <div className="container mx-auto px-4 max-w-7xl py-12">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={fadeIn}
+            className="space-y-2 text-center mb-8"
+          >
+            <p className="text-sm uppercase tracking-wider text-gray-400">
+              Hello{user?.firstName ? `, ${user.firstName}` : ""}
+            </p>
+            <h1 className="text-4xl font-bold text-white">
+              Welcome to Quantercise
+            </h1>
+          </motion.div>
+
+          {/* Quick Launch Bar */}
+          <div className="max-w-4xl mx-auto mt-8">
+            <div className="relative rounded-lg border-2 border-gray-700/50 bg-gray-800/50 shadow-lg">
+              <HighlightedInput
+                value={input}
+                onChange={(value) => setInput(value)}
+                placeholder="Start a new lesson..."
+                className="w-full pl-4 pr-24 py-3 h-12 border-none focus:outline-none transition-all duration-200"
+              />
+              <div className="absolute right-2 top-2 flex items-center gap-2">
+                <Tooltip.Provider>
+                  <Tooltip.Root delayDuration={200}>
+                    <Tooltip.Trigger asChild>
+                      <button
+                        onClick={startNewChat}
+                        className="p-1.5 rounded-lg hover:bg-gray-700 transition-colors"
+                      >
+                        <Plus className="h-4 w-4 text-gray-400" />
+                      </button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Portal>
+                      <Tooltip.Content
+                        className="rounded-md bg-gray-800 px-3 py-1.5 text-sm text-white shadow-md"
+                        sideOffset={5}
+                      >
+                        New Chat
+                        <Tooltip.Arrow className="fill-gray-800" />
+                      </Tooltip.Content>
+                    </Tooltip.Portal>
+                  </Tooltip.Root>
+
+                  <Tooltip.Root delayDuration={200}>
+                    <Tooltip.Trigger asChild>
+                      <button className="p-1.5 rounded-lg hover:bg-gray-700 transition-colors">
+                        <Cog className="h-4 w-4 text-gray-400" />
+                      </button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Portal>
+                      <Tooltip.Content
+                        className="rounded-md bg-gray-800 px-3 py-1.5 text-sm text-white shadow-md"
+                        sideOffset={5}
+                      >
+                        Settings
+                        <Tooltip.Arrow className="fill-gray-800" />
+                      </Tooltip.Content>
+                    </Tooltip.Portal>
+                  </Tooltip.Root>
+                </Tooltip.Provider>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto max-w-7xl py-12">
+        {/* Action Cards */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {[
+            {
+              href: "/dashboard/chats",
+              title: "Chats",
+              icon: <MessageSquare className="h-5 w-5" />,
+              description: "Start a lesson with our AI assistant",
+            },
+            {
+              href: "/dashboard/profile",
+              title: "Profile",
+              icon: <User className="h-5 w-5" />,
+              description: "View and update your profile information",
+            },
+            {
+              href: "/dashboard/settings",
+              title: "Settings",
+              icon: <Settings className="h-5 w-5" />,
+              description: "Configure your account settings",
+            },
+          ].map((card, i) => (
+            <motion.div
+              key={card.title}
+              custom={i}
+              initial="hidden"
+              animate="visible"
+              variants={cardVariants}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Link
+                href={card.href}
+                className="flex flex-col items-start p-6 rounded-xl border border-gray-800 bg-gray-900/50 hover:bg-gray-800/50 transition-all hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5"
+              >
+                <div className="rounded-full bg-gray-800 p-3 mb-4">
+                  {card.icon}
+                </div>
+                <h2 className="text-xl font-semibold mb-2">{card.title}</h2>
+                <p className="text-gray-400 text-sm">{card.description}</p>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* User Information
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mt-8 rounded-xl border border-gray-800 bg-gray-800/50 p-6 shadow-lg"
         >
-          Dashboard
-        </motion.h1>
-        <motion.p variants={itemVariants} className="text-muted-foreground">
-          Welcome back to your Quantercise dashboard!
-        </motion.p>
-      </div>
-
-      <motion.div
-        variants={containerVariants}
-        className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
-      >
-        <motion.div variants={itemVariants}>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">
-                Your Progress
-              </CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">67%</div>
-              <p className="text-xs text-muted-foreground">
-                +2% from last week
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="text-xl font-semibold">User Information</h2>
+            <Tooltip.Provider>
+              <Tooltip.Root delayDuration={200}>
+                <Tooltip.Trigger asChild>
+                  <Info className="h-4 w-4 text-gray-400" />
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content
+                    className="rounded-md bg-gray-800 px-3 py-1.5 text-sm text-white shadow-md"
+                    sideOffset={5}
+                  >
+                    Your account details
+                    <Tooltip.Arrow className="fill-gray-800" />
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
+            </Tooltip.Provider>
+          </div>
+          <div className="space-y-2">
+            <p className="text-sm">
+              <span className="text-gray-400">Email:</span>{" "}
+              {user?.emailAddresses[0]?.emailAddress}
+            </p>
+            <p className="text-sm">
+              <span className="text-gray-400">Name:</span> {user?.fullName}
+            </p>
+            {profile && (
+              <p className="text-sm">
+                <span className="text-gray-400">Created:</span>{" "}
+                {new Date(profile.created_at).toLocaleDateString()}
               </p>
-              <div className="mt-4">
-                <Progress value={67} className="h-2" />
+            )}
+          </div>
+        </motion.div> */}
+
+        {/* Recent Threads */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mt-8 rounded-xl border border-gray-800 bg-gray-900/50 p-6 shadow-lg"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-semibold">Your Recent Threads</h2>
+              <Tooltip.Provider>
+                <Tooltip.Root delayDuration={200}>
+                  <Tooltip.Trigger asChild>
+                    <Info className="h-4 w-4 text-gray-400" />
+                  </Tooltip.Trigger>
+                  <Tooltip.Portal>
+                    <Tooltip.Content
+                      className="rounded-md bg-gray-800 px-3 py-1.5 text-sm text-white shadow-md"
+                      sideOffset={5}
+                    >
+                      Your latest chat history
+                      <Tooltip.Arrow className="fill-gray-800" />
+                    </Tooltip.Content>
+                  </Tooltip.Portal>
+                </Tooltip.Root>
+              </Tooltip.Provider>
+            </div>
+            <Link
+              href="/dashboard/chats"
+              className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              View all
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {isLoadingThreads ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={itemVariants}>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">
-                Recent Exercises
-              </CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">12</div>
-              <p className="text-xs text-muted-foreground">
-                Completed this week
-              </p>
-              <div className="mt-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Derivatives Practice</span>
-                  <span className="text-muted-foreground">Today</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Integration Basics</span>
-                  <span className="text-muted-foreground">Yesterday</span>
-                </div>
+            ) : threads.length === 0 ? (
+              <div className="text-center py-8">
+                <MessageSquare className="h-8 w-8 mx-auto text-gray-400 mb-3" />
+                <p className="text-gray-400">No recent threads</p>
+                <Link
+                  href="/dashboard/chats/new"
+                  className="inline-block mt-3 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  Start a new chat
+                </Link>
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={itemVariants}>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Time Spent</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">3h 24m</div>
-              <p className="text-xs text-muted-foreground">This week</p>
-              <div className="mt-4">
-                <Progress value={75} className="h-2" />
+            ) : (
+              <div className="grid gap-3">
+                {threads.map((thread) => (
+                  <Link
+                    key={thread.id}
+                    href={`/dashboard/chats/new?id=${thread.id}&mode=${thread.mode}`}
+                    className="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg border border-gray-800/50 hover:bg-gray-800/50 transition-colors group"
+                  >
+                    <div className="flex-shrink-0">
+                      {thread.mode === "student" ? (
+                        <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
+                          <GraduationCap className="h-4 w-4 text-purple-400" />
+                        </div>
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                          <School className="h-4 w-4 text-blue-400" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-200 truncate">
+                        {thread.title}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {new Date(thread.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <MessageSquare className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </Link>
+                ))}
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </motion.div>
-
-      <div className="grid gap-6 md:grid-cols-2">
-        <motion.div variants={itemVariants}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Continue Learning</CardTitle>
-              <CardDescription>Pick up where you left off</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              <Link
-                href="/dashboard/exercises/calculus-1"
-                className="group flex items-center space-x-4 rounded-lg border p-4 hover:bg-muted transition-colors"
-              >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border bg-primary/10 text-primary group-hover:bg-primary/20">
-                  f(x)
-                </div>
-                <div className="flex-1 space-y-1">
-                  <p className="font-medium leading-none">Calculus I</p>
-                  <p className="text-sm text-muted-foreground">
-                    Lesson 4: The Power Rule
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-sm text-muted-foreground">67%</div>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
-                </div>
-              </Link>
-
-              <Link
-                href="/dashboard/exercises/algebra-2"
-                className="group flex items-center space-x-4 rounded-lg border p-4 hover:bg-muted transition-colors"
-              >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border bg-primary/10 text-primary group-hover:bg-primary/20">
-                  x²
-                </div>
-                <div className="flex-1 space-y-1">
-                  <p className="font-medium leading-none">Algebra II</p>
-                  <p className="text-sm text-muted-foreground">
-                    Lesson 8: Quadratic Equations
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-sm text-muted-foreground">100%</div>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
-                </div>
-              </Link>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={itemVariants}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Recommended For You</CardTitle>
-              <CardDescription>Based on your progress</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              <Link
-                href="/dashboard/exercises/precalculus"
-                className="group flex items-center space-x-4 rounded-lg border p-4 hover:bg-muted transition-colors"
-              >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border bg-primary/10 text-primary group-hover:bg-primary/20">
-                  sin
-                </div>
-                <div className="flex-1 space-y-1">
-                  <p className="font-medium leading-none">Precalculus</p>
-                  <p className="text-sm text-muted-foreground">
-                    Trigonometric Functions
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-sm text-muted-foreground">New</div>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
-                </div>
-              </Link>
-
-              <Link
-                href="/dashboard/exercises/limits"
-                className="group flex items-center space-x-4 rounded-lg border p-4 hover:bg-muted transition-colors"
-              >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border bg-primary/10 text-primary group-hover:bg-primary/20">
-                  lim
-                </div>
-                <div className="flex-1 space-y-1">
-                  <p className="font-medium leading-none">Limits</p>
-                  <p className="text-sm text-muted-foreground">
-                    Introduction to Limits
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-sm text-muted-foreground">
-                    Recommended
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
-                </div>
-              </Link>
-            </CardContent>
-          </Card>
+            )}
+          </div>
         </motion.div>
       </div>
-    </motion.div>
+    </div>
   );
 }

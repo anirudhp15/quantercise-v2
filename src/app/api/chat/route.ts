@@ -1,278 +1,131 @@
-import { OpenAI } from "openai";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
-
-// Define basic types for Supabase database
-interface Database {
-  public: {
-    Tables: {
-      conversations: {
-        Row: {
-          id: string;
-          user_id: string;
-          mode: string;
-          title: string;
-          created_at: string;
-          updated_at: string;
-        };
-      };
-      messages: {
-        Row: {
-          id: string;
-          conversation_id: string;
-          role: string;
-          content: string;
-          created_at: string;
-        };
-      };
-    };
-  };
-}
+import { NextRequest, NextResponse } from "next/server";
+import { LessonSettings } from "@/types";
+import { currentUser } from "@clerk/nextjs/server"; // Import Clerk's server-side helper
 
 export const runtime = "edge";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "",
-});
-
-// Custom implementation of StreamingTextResponse
-class StreamingTextResponse extends Response {
-  constructor(
-    stream: ReadableStream,
-    options: {
-      status?: number;
-      headers?: Record<string, string>;
-      onCompletion?: (text: string) => void | Promise<void>;
-    } = {}
-  ) {
-    const { status = 200, headers = {}, onCompletion } = options;
-
-    // Create a TransformStream to collect the full response for onCompletion
-    let fullText = "";
-    const textEncoder = new TextEncoder();
-
-    const transformStream = new TransformStream({
-      transform(chunk, controller) {
-        const text = new TextDecoder().decode(chunk);
-        fullText += text;
-        controller.enqueue(chunk);
-      },
-      flush(controller) {
-        if (onCompletion) {
-          // Need to execute this asynchronously since flush can't be async
-          Promise.resolve(onCompletion(fullText)).catch(console.error);
-        }
-      },
-    });
-
-    // Set default headers for streaming text
-    const responseHeaders = {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Transfer-Encoding": "chunked",
-      "X-Content-Type-Options": "nosniff",
-      ...headers,
-    };
-
-    // Pipe the original stream through our transform stream
-    const modifiedStream = stream.pipeThrough(transformStream);
-
-    super(modifiedStream, {
-      status,
-      headers: responseHeaders,
-    });
-  }
+export interface ChatRequest {
+  message: string;
+  threadId?: string;
+  images?: Array<{ path: string; type: string; name: string }>;
+  mode?: "student" | "teacher";
+  settings?: LessonSettings;
+  useV1?: boolean; // New flag to explicitly use v1 endpoint
 }
 
-// Utility to convert OpenAI stream to ReadableStream
-function OpenAIStream(response: any): ReadableStream<Uint8Array> {
-  const encoder = new TextEncoder();
-
-  return new ReadableStream({
-    async start(controller) {
-      try {
-        for await (const chunk of response) {
-          const content = chunk.choices[0]?.delta?.content || "";
-          if (content) {
-            controller.enqueue(encoder.encode(content));
-          }
-        }
-        controller.close();
-      } catch (error) {
-        console.error("Error in stream processing:", error);
-        controller.error(error);
-      }
-    },
-  });
-}
-
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { conversationId, message, mode } = await req.json();
-
-    if (!message) {
-      return new Response(JSON.stringify({ error: "Message is required" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Create a Supabase client with awaited cookies
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient<Database>({
-      cookies: () => cookieStore,
-    });
-
-    // Check if the user is authenticated
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
-
-    if (sessionError || !session?.user) {
-      console.error(
-        "Authentication error:",
-        sessionError || "No session found"
-      );
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    const userId = session.user.id;
-    let activeConversationId = conversationId;
-
-    // If no conversationId is provided, create a new conversation
-    if (!activeConversationId) {
-      const { data: newConversation, error: createError } = await supabase
-        .from("conversations")
-        .insert({
-          user_id: userId,
-          mode: mode || "student", // Use provided mode or default to student
-          title: "New Conversation",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      if (createError || !newConversation) {
-        console.error("Error creating conversation:", createError);
-        return new Response(
-          JSON.stringify({ error: "Failed to create conversation" }),
-          { status: 500, headers: { "Content-Type": "application/json" } }
+    // Get the current user securely on the server-side
+    let user;
+    try {
+      user = await currentUser();
+    } catch (authError) {
+      console.warn("[DEV] Bypassing auth for non-critical API route:", req.url);
+      // Continue in dev mode, but user will be undefined
+      if (process.env.NODE_ENV !== "development") {
+        return NextResponse.json(
+          { error: "Authentication error" },
+          { status: 401 }
         );
       }
-
-      activeConversationId = newConversation.id;
     }
 
-    // Verify if the conversation belongs to the authenticated user
-    const { data: conversation, error: conversationError } = await supabase
-      .from("conversations")
-      .select("*")
-      .eq("id", activeConversationId)
-      .eq("user_id", userId)
-      .single();
+    const clerkId = user?.id;
 
-    if (conversationError || !conversation) {
-      return new Response(
-        JSON.stringify({
-          error: "Conversation not found or does not belong to the user",
-        }),
-        {
-          status: 404,
-          headers: { "Content-Type": "application/json" },
-        }
+    if (!clerkId && process.env.NODE_ENV !== "development") {
+      // If no user is found in production, return an authentication error
+      return NextResponse.json(
+        { error: "User not authenticated" },
+        { status: 401 }
       );
     }
 
-    // Insert the user's message into the database
-    await supabase.from("messages").insert({
-      conversation_id: activeConversationId,
-      role: "user",
-      content: message,
-    });
+    // Parse request body
+    const requestBody = await req.json();
+    const requestData = requestBody as ChatRequest;
+    const {
+      message,
+      threadId,
+      images,
+      mode = "student",
+      settings,
+      useV1 = false, // Default to false - prefer v2 endpoint
+    } = requestData;
 
-    // Retrieve all messages for the conversation to maintain context
-    const { data: messages, error: messagesError } = await supabase
-      .from("messages")
-      .select("*")
-      .eq("conversation_id", activeConversationId)
-      .order("created_at", { ascending: true });
+    // If v1 is explicitly requested, use the v1 handler
+    if (useV1) {
+      // Import the v1 handler
+      const v1Module = await import("./v1/route");
 
-    if (messagesError) {
-      return new Response(
-        JSON.stringify({ error: "Failed to retrieve messages" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // Generate a system message based on the conversation mode
-    let systemMessage = "";
-    if (conversation.mode === "student") {
-      systemMessage =
-        "You are a helpful tutor assisting a student with their quantitative exercises and learning. Focus on explaining mathematical concepts clearly and providing step-by-step guidance without giving away complete solutions. Encourage critical thinking.";
-    } else if (conversation.mode === "teacher") {
-      systemMessage =
-        "You are a helpful assistant for teachers, helping them create educational content, develop lesson plans, and design assessments for quantitative subjects. Provide pedagogical strategies and suggest ways to explain complex concepts.";
-    } else {
-      systemMessage =
-        "You are a helpful assistant focused on mathematics and quantitative subjects.";
-    }
-
-    // Prepare messages for the OpenAI API call
-    const openaiMessages = [
-      { role: "system", content: systemMessage },
-      ...messages.map((msg) => ({
-        role: msg.role as "user" | "assistant" | "system",
-        content: msg.content,
-      })),
-    ];
-
-    // Make the API call to OpenAI
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo", // Using 3.5-turbo instead of 4-turbo for wider availability
-      messages: openaiMessages as any,
-      stream: true,
-    });
-
-    // Create a stream for the response
-    const stream = OpenAIStream(response);
-
-    // Helper function for the stream that will save the completion to the database
-    async function saveCompletion(completion: string) {
-      // Save the assistant's response back to the database
-      await supabase.from("messages").insert({
-        conversation_id: activeConversationId,
-        role: "assistant",
-        content: completion,
+      // Create the v1 request body
+      const v1Body = JSON.stringify({
+        prompt: message,
+        threadId,
+        settings,
       });
 
-      // Update the conversation's timestamp
-      await supabase
-        .from("conversations")
-        .update({ updated_at: new Date().toISOString() })
-        .eq("id", activeConversationId);
+      // Directly call the v1 handler with modified body
+      return v1Module.POST(
+        new NextRequest(req.url, {
+          method: "POST",
+          headers: req.headers,
+          body: v1Body,
+        })
+      );
     }
 
-    // Return the streaming response
-    return new StreamingTextResponse(stream, {
-      onCompletion: saveCompletion,
-    });
+    // Try using v2 first
+    try {
+      // Import the v2 handler
+      const v2Module = await import("./v2/route");
+
+      // Create the v2 request body
+      const v2Body = JSON.stringify({
+        message,
+        threadId,
+        images,
+        mode,
+        settings,
+      });
+
+      // Call the v2 handler with modified body
+      return await v2Module.POST(
+        new NextRequest(req.url, {
+          method: "POST",
+          headers: req.headers,
+          body: v2Body,
+        })
+      );
+    } catch (v2Error) {
+      console.error("Error with v2 endpoint, falling back to v1:", v2Error);
+
+      // Fall back to v1 - import the handler
+      const v1Module = await import("./v1/route");
+
+      // Create the v1 request body
+      const v1Body = JSON.stringify({
+        prompt: message,
+        threadId,
+        settings,
+      });
+
+      // Call the v1 handler with modified body
+      return v1Module.POST(
+        new NextRequest(req.url, {
+          method: "POST",
+          headers: req.headers,
+          body: v1Body,
+        })
+      );
+    }
   } catch (error) {
-    console.error("Error in chat API:", error);
-    return new Response(
-      JSON.stringify({
-        error: "An error occurred while processing your request",
-      }),
+    console.error("Error processing chat request:", error);
+    return NextResponse.json(
       {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
     );
   }
 }
